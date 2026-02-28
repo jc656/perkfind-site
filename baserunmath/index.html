@@ -484,7 +484,7 @@
   <div class="hs-tabs" id="hs-tabs"></div>
   <div class="hs-list" id="hs-list"></div>
   <button class="play-btn" onclick="showStartScreen()" style="font-size:18px;padding:12px 36px;">Back</button>
-  <button class="reset-btn" onclick="resetScores()">Reset Scores</button>
+
 </div>
 
 <!-- Pause Screen -->
@@ -543,7 +543,7 @@
 var DIFFICULTY = {
   easy:    { timer: 15, hr: 3, triple: 6, double: 12, tier: 1, label: 'Easy' },
   hard:    { timer: 10, hr: 2, triple: 4, double: 8,  tier: 2, label: 'Hard' },
-  extreme: { timer: 2,  hr: 0.8, triple: 1, double: 1.5, tier: 3, label: 'Extreme' }
+  extreme: { timer: 2,  hr: 0.75, triple: 1, double: 1.5, tier: 3, label: 'Extreme' }
 };
 
 // --- Game State ---
@@ -1159,9 +1159,18 @@ function gameOver() {
   document.getElementById('go-hits').innerHTML =
     state.singles + ' Singles &middot; ' + state.doubles + ' Doubles &middot; ' + state.triples + ' Triples &middot; ' + state.homers + ' Home Runs';
 
-  // High score entry
+  // High score — auto-save as AAA, let user change initials
   var entryArea = document.getElementById('hs-entry-area');
+  savedHSIndex = -1;
   if (state.score > 0 && isHighScore(state.score, currentDifficulty)) {
+    addHighScore('AAA', state.score, currentDifficulty);
+    // Find which index we just saved to
+    var scores = getHighScores()[currentDifficulty];
+    for (var si = 0; si < scores.length; si++) {
+      if (scores[si].score === state.score && scores[si].time === state.gameElapsed && scores[si].initials === 'AAA') {
+        savedHSIndex = si; break;
+      }
+    }
     entryArea.innerHTML = buildHSEntry();
     initHSEntry();
   } else {
@@ -1180,12 +1189,13 @@ function buildHSEntry() {
       '<div class="hs-slot" onclick="cycleSlot(1)"><div class="arrows">\u25b2</div><div class="letter" id="slot1">A</div><div class="arrows">\u25bc</div></div>' +
       '<div class="hs-slot" onclick="cycleSlot(2)"><div class="arrows">\u25b2</div><div class="letter" id="slot2">A</div><div class="arrows">\u25bc</div></div>' +
     '</div>' +
-    '<button class="hs-submit" onclick="submitHighScore()">Save Score</button>' +
+    '<button class="hs-submit" onclick="submitHighScore()">Update Initials</button>' +
   '</div>';
 }
 
 var hsLetters = [0, 0, 0];
 var ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var savedHSIndex = -1;
 
 function initHSEntry() {
   hsLetters = [0, 0, 0];
@@ -1202,7 +1212,12 @@ function cycleSlot(idx) {
 
 function submitHighScore() {
   var initials = ALPHA[hsLetters[0]] + ALPHA[hsLetters[1]] + ALPHA[hsLetters[2]];
-  addHighScore(initials, state.score, currentDifficulty);
+  // Update the auto-saved entry with chosen initials
+  var data = getHighScores();
+  if (savedHSIndex >= 0 && data[currentDifficulty][savedHSIndex]) {
+    data[currentDifficulty][savedHSIndex].initials = initials;
+    saveHighScores(data);
+  }
   document.getElementById('hs-entry-area').innerHTML =
     '<div style="color:#51cf66;font-weight:700;margin-bottom:16px;">Saved! ' + initials + ' \u2014 ' + state.score + ' runs (' + formatTime(state.gameElapsed) + ')</div>';
 }
