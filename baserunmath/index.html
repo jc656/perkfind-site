@@ -472,7 +472,10 @@
   <div class="stats-grid" id="go-stats"></div>
   <div class="hit-breakdown" id="go-hits"></div>
   <div id="hs-entry-area"></div>
-  <button class="play-btn" onclick="showStartScreen()">Play Again</button>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="play-btn" onclick="showStartScreen()">Play Again</button>
+    <button class="play-btn" onclick="showHighScores()" style="background:#16213e;color:#ffd700;border:2px solid #ffd700;font-size:18px;padding:16px 32px;">High Scores</button>
+  </div>
 </div>
 
 <!-- High Scores Screen -->
