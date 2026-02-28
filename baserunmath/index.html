@@ -543,7 +543,7 @@
 var DIFFICULTY = {
   easy:    { timer: 15, hr: 3, triple: 6, double: 12, tier: 1, label: 'Easy' },
   hard:    { timer: 10, hr: 2, triple: 4, double: 8,  tier: 2, label: 'Hard' },
-  extreme: { timer: 4,  hr: 1, triple: 1.8, double: 2.8, tier: 3, label: 'Extreme' }
+  extreme: { timer: 2.8,  hr: 0.7, triple: 1.2, double: 2, tier: 3, label: 'Extreme' }
 };
 
 // --- Game State ---
@@ -560,7 +560,8 @@ function freshState() {
     bases: [false, false, false],
     pitchTime: 0, timerInterval: null, answered: false,
     totalResponseTime: 0, correctAnswers: 0,
-    colorTimeouts: []
+    colorTimeouts: [],
+    gameStartTime: 0, gameElapsed: 0
   };
 }
 
@@ -676,15 +677,31 @@ function saveHighScores(data) {
 
 function isHighScore(score, diff) {
   var scores = getHighScores()[diff];
-  return scores.length < 5 || score > scores[scores.length - 1].score;
+  if (scores.length < 5) return true;
+  var worst = scores[scores.length - 1];
+  if (score > worst.score) return true;
+  if (score === 99 && worst.score === 99) return true; // time tiebreaker possible
+  return false;
+}
+
+function hsSort(a, b) {
+  if (a.score !== b.score) return b.score - a.score;
+  // Both 99: lower time wins
+  return (a.time || 9999) - (b.time || 9999);
 }
 
 function addHighScore(initials, score, diff) {
   var data = getHighScores();
-  data[diff].push({ initials: initials, score: score, date: new Date().toISOString().slice(0,10) });
-  data[diff].sort(function(a, b) { return b.score - a.score; });
+  data[diff].push({ initials: initials, score: score, time: state.gameElapsed, date: new Date().toISOString().slice(0,10) });
+  data[diff].sort(hsSort);
   data[diff] = data[diff].slice(0, 5);
   saveHighScores(data);
+}
+
+function formatTime(secs) {
+  var m = Math.floor(secs / 60);
+  var s = secs % 60;
+  return m > 0 ? m + ':' + (s < 10 ? '0' : '') + s : s + 's';
 }
 
 function resetScores() {
@@ -711,7 +728,8 @@ function renderStartHighScores() {
       html += '<div style="font-size:11px;color:#555;margin-top:6px;text-transform:uppercase;">' + DIFFICULTY[diff].label + '</div>';
       var show = Math.min(scores.length, 3);
       for (var i = 0; i < show; i++) {
-        html += '<div class="start-hs-row"><span class="initials">' + scores[i].initials + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
+        var timeStr = scores[i].time ? ' ' + formatTime(scores[i].time) : '';
+      html += '<div class="start-hs-row"><span class="initials">' + scores[i].initials + '</span><span style="color:#74c0fc;font-size:12px;margin-right:6px;">' + timeStr + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
       }
     }
   }
@@ -993,11 +1011,21 @@ function handleAnswer(choice, btn) {
     playSound(sfxType);
     var runs = advanceRunners(advanceBases);
     state.score += runs;
+    if (state.score >= 99) state.score = 99;
     showBanner(bannerText, bannerColor);
 
     if (hitType === 'homer') {
       document.getElementById('diamond-area').classList.add('flash-hr');
       setTimeout(function() { document.getElementById('diamond-area').classList.remove('flash-hr'); }, 600);
+    }
+
+    // Win condition
+    if (state.score >= 99) {
+      updateScoreboard();
+      updateBases();
+      updateOuts();
+      setTimeout(gameOver, 1400);
+      return;
     }
   } else {
     // Wrong answer = immediate OUT
@@ -1097,28 +1125,33 @@ function startGame(diff) {
   updateOuts();
   document.getElementById('problem').textContent = '';
   document.getElementById('answers').innerHTML = '';
+  state.gameStartTime = Date.now();
   setTimeout(servePitch, 500);
 }
 
 function gameOver() {
   clearInterval(state.timerInterval);
+  state.gameElapsed = Math.round((Date.now() - state.gameStartTime) / 1000);
 
   var rating, ratingColor;
-  if (state.score >= 10) { rating = 'Hall of Famer'; ratingColor = '#ffd700'; }
+  if (state.score >= 99) { rating = 'LEGEND'; ratingColor = '#ffd700'; }
+  else if (state.score >= 10) { rating = 'Hall of Famer'; ratingColor = '#ffd700'; }
   else if (state.score >= 6) { rating = 'MVP'; ratingColor = '#51cf66'; }
   else if (state.score >= 3) { rating = 'All-Star'; ratingColor = '#74c0fc'; }
   else { rating = 'Rookie'; ratingColor = '#aaa'; }
 
   var pct = state.atBats > 0 ? Math.round((state.hits / state.atBats) * 100) : 0;
   var avgTime = state.correctAnswers > 0 ? (state.totalResponseTime / state.correctAnswers).toFixed(1) + 's' : '\u2014';
+  var elapsed = formatTime(state.gameElapsed);
 
+  document.getElementById('go-title').textContent = state.score >= 99 ? 'YOU WIN!' : 'Game Over';
   document.getElementById('go-rating').innerHTML =
     '<span style="color:' + ratingColor + '">' + rating + '</span>';
 
   document.getElementById('go-stats').innerHTML =
     '<div class="stat-box"><div class="stat-val">' + state.score + '</div><div class="stat-label">Runs Scored</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + elapsed + '</div><div class="stat-label">Total Time</div></div>' +
     '<div class="stat-box"><div class="stat-val">' + state.hits + '</div><div class="stat-label">Hits</div></div>' +
-    '<div class="stat-box"><div class="stat-val">' + state.bestStreak + '</div><div class="stat-label">Best Streak</div></div>' +
     '<div class="stat-box"><div class="stat-val">' + pct + '%</div><div class="stat-label">Hit Rate</div></div>' +
     '<div class="stat-box"><div class="stat-val">' + avgTime + '</div><div class="stat-label">Avg Response</div></div>' +
     '<div class="stat-box"><div class="stat-val">' + DIFFICULTY[currentDifficulty].label + '</div><div class="stat-label">Difficulty</div></div>';
@@ -1171,7 +1204,7 @@ function submitHighScore() {
   var initials = ALPHA[hsLetters[0]] + ALPHA[hsLetters[1]] + ALPHA[hsLetters[2]];
   addHighScore(initials, state.score, currentDifficulty);
   document.getElementById('hs-entry-area').innerHTML =
-    '<div style="color:#51cf66;font-weight:700;margin-bottom:16px;">Saved! ' + initials + ' \u2014 ' + state.score + ' runs</div>';
+    '<div style="color:#51cf66;font-weight:700;margin-bottom:16px;">Saved! ' + initials + ' \u2014 ' + state.score + ' runs (' + formatTime(state.gameElapsed) + ')</div>';
 }
 
 // --- High Scores Screen ---
@@ -1213,7 +1246,8 @@ function renderHighScoresList(diff) {
 
   var html = '';
   for (var i = 0; i < scores.length; i++) {
-    html += '<div class="hs-row"><span class="rank">' + (i+1) + '.</span><span class="initials">' + scores[i].initials + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
+    var timeStr = scores[i].time ? formatTime(scores[i].time) : '';
+    html += '<div class="hs-row"><span class="rank">' + (i+1) + '.</span><span class="initials">' + scores[i].initials + '</span><span style="color:#74c0fc;font-size:13px;margin-right:8px;">' + timeStr + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
   }
   listEl.innerHTML = html;
 }
