@@ -1123,6 +1123,7 @@ function startGame(diff) {
   updateScoreboard();
   updateBases();
   updateOuts();
+  if (diff === 'extreme') state.outs = 2;
   document.getElementById('problem').textContent = '';
   document.getElementById('answers').innerHTML = '';
   state.gameStartTime = Date.now();
