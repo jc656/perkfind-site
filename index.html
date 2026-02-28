@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PerkFind — Simple apps. Real useful.</title>
-    <meta name="description" content="PerkFind LLC develops small, focused apps.">
+    <title>PerkFind — Small apps that do one thing well.</title>
+    <meta name="description" content="PerkFind LLC makes small, focused apps. No accounts, no tracking, no nonsense.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after {
             margin: 0;
@@ -13,16 +16,16 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            color: #1a1a1a;
-            background: #fafafa;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #2a2a2a;
+            background: #FFF8F4;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
-            max-width: 720px;
+            max-width: 680px;
             margin: 0 auto;
             padding: 0 24px;
         }
@@ -34,151 +37,99 @@
         }
 
         .logo {
+            font-family: 'Fredoka', sans-serif;
             font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            color: #111;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: #1a1a1a;
         }
 
         .tagline {
-            margin-top: 6px;
+            margin-top: 8px;
             font-size: 1.05rem;
-            color: #888;
+            color: #8a8078;
             font-weight: 400;
         }
 
         /* Hero */
         .hero {
             text-align: center;
-            padding: 48px 0 64px;
+            padding: 48px 0 40px;
         }
 
         .hero p {
-            font-size: 1.125rem;
-            color: #555;
-            max-width: 520px;
-            margin: 0 auto;
-            line-height: 1.7;
-        }
-
-        /* Apps Section */
-        .apps-section {
-            padding-bottom: 80px;
-        }
-
-        .section-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #999;
-            margin-bottom: 24px;
-        }
-
-        .app-card {
-            background: #fff;
-            border: 1px solid #e8e8e8;
-            border-radius: 16px;
-            padding: 28px;
-            margin-bottom: 16px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .app-card:hover {
-            border-color: #d0d0d0;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-        }
-
-        .app-card-inner {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        .app-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            flex-shrink: 0;
-        }
-
-        .app-icon-perkfound {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        }
-
-        .app-icon-pennypig {
-            background: linear-gradient(135deg, #f59e0b, #ef4444);
-        }
-
-        .app-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .app-name {
             font-size: 1.2rem;
-            font-weight: 650;
-            color: #111;
-            margin-bottom: 4px;
+            color: #4a4440;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.75;
         }
 
-        .app-desc {
-            font-size: 0.95rem;
-            color: #666;
-            margin-bottom: 16px;
+        /* Philosophy / Values */
+        .values {
+            padding: 24px 0 56px;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .value-card {
+            background: #FFFFFF;
+            border: 1px solid #F0E8E2;
+            border-radius: 16px;
+            padding: 28px 22px;
+            text-align: center;
+        }
+
+        .value-icon {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+        }
+
+        .value-title {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+
+        .value-desc {
+            font-size: 0.88rem;
+            color: #7a7068;
             line-height: 1.5;
         }
 
-        .app-badges {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+        /* Sign-off */
+        .sign-off {
+            text-align: center;
+            padding: 40px 0 64px;
         }
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.8rem;
+        .sign-off-line {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.15rem;
             font-weight: 500;
-            text-decoration: none;
-            transition: opacity 0.15s ease;
+            color: #3a3430;
+            max-width: 480px;
+            margin: 0 auto;
+            line-height: 1.65;
         }
 
-        .badge:hover {
-            opacity: 0.85;
-        }
-
-        .badge-active {
-            background: #111;
-            color: #fff;
-        }
-
-        .badge-soon {
-            background: #f0f0f0;
-            color: #999;
-            cursor: default;
-        }
-
-        .badge-soon:hover {
-            opacity: 1;
-        }
-
-        .badge svg {
-            width: 14px;
-            height: 14px;
-            flex-shrink: 0;
+        .sign-off-divider {
+            width: 48px;
+            height: 3px;
+            background: #E8D5C8;
+            border-radius: 2px;
+            margin: 0 auto 28px;
         }
 
         /* Footer */
         footer {
-            border-top: 1px solid #e8e8e8;
+            border-top: 1px solid #EDE5DF;
             padding: 32px 0;
             text-align: center;
         }
@@ -192,7 +143,7 @@
 
         .footer-copyright {
             font-size: 0.85rem;
-            color: #999;
+            color: #9a9088;
         }
 
         .footer-links {
@@ -204,17 +155,17 @@
 
         .footer-links a {
             font-size: 0.85rem;
-            color: #888;
+            color: #8a8078;
             text-decoration: none;
             transition: color 0.15s ease;
         }
 
         .footer-links a:hover {
-            color: #444;
+            color: #4a4440;
         }
 
         .footer-sep {
-            color: #ddd;
+            color: #D8CFC8;
             font-size: 0.85rem;
         }
 
@@ -229,29 +180,24 @@
             }
 
             .hero {
-                padding: 36px 0 48px;
+                padding: 36px 0 32px;
             }
 
             .hero p {
-                font-size: 1rem;
+                font-size: 1.05rem;
             }
 
-            .app-card {
-                padding: 20px;
+            .values-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
             }
 
-            .app-card-inner {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
+            .value-card {
+                padding: 22px 20px;
             }
 
-            .app-badges {
-                justify-content: center;
-            }
-
-            .apps-section {
-                padding-bottom: 56px;
+            .sign-off-line {
+                font-size: 1.05rem;
             }
         }
     </style>
@@ -264,50 +210,32 @@
         </header>
 
         <section class="hero">
-            <p>PerkFind LLC develops small, focused apps.</p>
+            <p>Small apps that do one thing well. No account sign-ups, no AI that thinks it knows better than you.</p>
         </section>
 
-        <section class="apps-section">
-
-            <div class="app-card">
-                <div class="app-card-inner">
-                    <div class="app-icon app-icon-perkfound">💳</div>
-                    <div class="app-info">
-                        <div class="app-name">PerkFound</div>
-                        <div class="app-desc">Track your credit card perks so you never miss a benefit.</div>
-                        <div class="app-badges">
-                            <span class="badge badge-soon">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                                App Store — Coming Soon
-                            </span>
-                            <span class="badge badge-soon">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.78c.03.01.06.02.09.02.05 0 .1-.02.15-.05l3.03-2.04c.12-.08.15-.24.07-.36s-.24-.15-.36-.07l-2.68 1.8L3.3 21.1c-.04-.14-.19-.22-.33-.18s-.22.19-.18.33l.39 2.53zM20.73.22c-.03-.01-.06-.02-.09-.02-.05 0-.1.02-.15.05L17.46 2.3c-.12.08-.15.24-.07.36s.24.15.36.07l2.68-1.8.18 1.98c.01.15.14.26.29.25.14-.01.25-.14.25-.29L20.73.22zM21.85 23.76l-1.53-2.02c-.09-.11-.25-.14-.36-.05s-.14.25-.05.36l1.35 1.79-1.98-.14c-.14-.01-.27.1-.28.24-.01.15.1.27.24.28l2.56.18c.03 0 .06 0 .09-.01.06-.02.1-.06.14-.11.05-.08.06-.18.02-.27v-.01l-.2-.24zM2.07.24L3.6 2.26c.09.11.25.14.36.05s.14-.25.05-.36L2.66.16l1.98.14c.14.02.27-.1.28-.24.01-.15-.1-.27-.24-.28L2.12-.4c-.03 0-.06 0-.09.01-.06.02-.11.06-.14.11-.05.08-.06.18-.02.27l.2.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.5c-4.69 0-8.5-3.81-8.5-8.5S7.31 3.5 12 3.5s8.5 3.81 8.5 8.5-3.81 8.5-8.5 8.5zm4.95-13.45l-6.36 6.36-2.12-2.12c-.29-.29-.77-.29-1.06 0s-.29.77 0 1.06l2.65 2.65c.15.15.34.22.53.22s.38-.07.53-.22l6.89-6.89c.29-.29.29-.77 0-1.06s-.77-.29-1.06 0z"/></svg>
-                                Play Store — Coming Soon
-                            </span>
-                        </div>
-                    </div>
+        <section class="values">
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">🔒</div>
+                    <div class="value-title">Privacy first</div>
+                    <div class="value-desc">No accounts. No tracking. Your data stays on your device.</div>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🎯</div>
+                    <div class="value-title">One job, done right</div>
+                    <div class="value-desc">Each app solves one problem without the bloat.</div>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">💰</div>
+                    <div class="value-title">Pay once, own it</div>
+                    <div class="value-desc">No subscriptions. No ads. Just a fair price.</div>
                 </div>
             </div>
+        </section>
 
-            <div class="app-card">
-                <div class="app-card-inner">
-                    <div class="app-icon app-icon-pennypig">🐷</div>
-                    <div class="app-info">
-                        <div class="app-name">PennyPig</div>
-                        <div class="app-desc">A digital piggy bank to track your kids' cash.</div>
-                        <div class="app-badges">
-                            <span class="badge badge-soon">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                                App Store — Coming Soon
-                            </span>
-                            <span class="badge badge-soon">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.78c.03.01.06.02.09.02.05 0 .1-.02.15-.05l3.03-2.04c.12-.08.15-.24.07-.36s-.24-.15-.36-.07l-2.68 1.8L3.3 21.1c-.04-.14-.19-.22-.33-.18s-.22.19-.18.33l.39 2.53zM20.73.22c-.03-.01-.06-.02-.09-.02-.05 0-.1.02-.15.05L17.46 2.3c-.12.08-.15.24-.07.36s.24.15.36.07l2.68-1.8.18 1.98c.01.15.14.26.29.25.14-.01.25-.14.25-.29L20.73.22zM21.85 23.76l-1.53-2.02c-.09-.11-.25-.14-.36-.05s-.14.25-.05.36l1.35 1.79-1.98-.14c-.14-.01-.27.1-.28.24-.01.15.1.27.24.28l2.56.18c.03 0 .06 0 .09-.01.06-.02.1-.06.14-.11.05-.08.06-.18.02-.27v-.01l-.2-.24zM2.07.24L3.6 2.26c.09.11.25.14.36.05s.14-.25.05-.36L2.66.16l1.98.14c.14.02.27-.1.28-.24.01-.15-.1-.27-.24-.28L2.12-.4c-.03 0-.06 0-.09.01-.06.02-.11.06-.14.11-.05.08-.06.18-.02.27l.2.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.5c-4.69 0-8.5-3.81-8.5-8.5S7.31 3.5 12 3.5s8.5 3.81 8.5 8.5-3.81 8.5-8.5 8.5zm4.95-13.45l-6.36 6.36-2.12-2.12c-.29-.29-.77-.29-1.06 0s-.29.77 0 1.06l2.65 2.65c.15.15.34.22.53.22s.38-.07.53-.22l6.89-6.89c.29-.29.29-.77 0-1.06s-.77-.29-1.06 0z"/></svg>
-                                Play Store — Coming Soon
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <section class="sign-off">
+            <div class="sign-off-divider"></div>
+            <p class="sign-off-line">Made in the USA by a small team that believes apps should do less, not more.</p>
         </section>
     </div>
 
@@ -316,10 +244,10 @@
             <div class="footer-content">
                 <div class="footer-links">
                     <a href="mailto:hello@perkfind.com">hello@perkfind.com</a>
-                    <span class="footer-sep">·</span>
-                    <a href="/privacy/perkfound">PerkFound Privacy Policy</a>
-                    <span class="footer-sep">·</span>
-                    <a href="/privacy/pennypig">PennyPig Privacy Policy</a>
+                    <span class="footer-sep">&middot;</span>
+                    <a href="/privacy">Privacy Policy</a>
+                    <span class="footer-sep">&middot;</span>
+                    <a href="/terms">Terms of Use</a>
                 </div>
                 <div class="footer-copyright">&copy; 2026 PerkFind LLC</div>
             </div>

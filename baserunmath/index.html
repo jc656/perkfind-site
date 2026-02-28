@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Base Run Math</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #fff;
+    overflow: hidden;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Scoreboard bar */
+  #scoreboard {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+    background: #0f0f23;
+    font-weight: 700;
+    flex-shrink: 0;
+    gap: 16px;
+    position: relative;
+  }
+  #scoreboard .label { color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sb-group { text-align: center; }
+  .sb-side { display: flex; gap: 14px; align-items: center; }
+  .sb-side .val { font-size: 16px; }
+  .sb-center .val { font-size: 36px; font-weight: 900; color: #ffd700; line-height: 1; }
+  .sb-center .label { color: #ffd700; }
+  .outs-val { color: #ff6b6b; }
+  .streak-val { color: #51cf66; }
+  .avg-val { color: #74c0fc; }
+  .diff-val { color: #aaa; }
+
+  /* Sound toggle */
+  #sound-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 10;
+  }
+  #sound-toggle.on { color: #ffd700; }
+
+  /* Game control buttons (pause/quit) */
+  .game-controls {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+  .gc-btn {
+    background: none;
+    border: 1px solid #ffffff20;
+    color: #888;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gc-btn:active { background: #ffffff10; }
+
+  /* Diamond area */
+  #diamond-area {
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #2d5a27 0%, #3a7a32 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    position: relative;
+    height: 180px;
+  }
+  #diamond {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    transform: rotate(45deg);
+  }
+  .base {
+    width: 20px;
+    height: 20px;
+    background: #f5f0e1;
+    border: 2px solid #c9b98a;
+    position: absolute;
+    transition: background 0.3s;
+  }
+  .base.occupied { background: #ffd700; border-color: #ffaa00; box-shadow: 0 0 10px #ffd700; }
+  #home { bottom: -10px; left: 50%; transform: translateX(-50%) rotate(-45deg); border-radius: 2px; }
+  #first { right: -10px; top: 50%; transform: translateY(-50%) rotate(-45deg); border-radius: 2px; }
+  #second { top: -10px; left: 50%; transform: translateX(-50%) rotate(-45deg); border-radius: 2px; }
+  #third { left: -10px; top: 50%; transform: translateY(-50%) rotate(-45deg); border-radius: 2px; }
+  .infield {
+    position: absolute;
+    inset: 15px;
+    background: #c4956a40;
+    border-radius: 3px;
+  }
+
+  /* Result banner */
+  #result-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 2px 2px 4px #00000080;
+    z-index: 10;
+    white-space: nowrap;
+    transition: none;
+  }
+
+  /* Timer bar */
+  #timer-wrap {
+    height: 6px;
+    background: #333;
+    flex-shrink: 0;
+  }
+  #timer-bar {
+    height: 100%;
+    background: #51cf66;
+    width: 100%;
+    transition: width linear, background 0.3s;
+  }
+
+  /* Question area */
+  #question-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    min-height: 0;
+  }
+  #problem {
+    font-size: 42px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    min-height: 52px;
+  }
+  #answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .answer-btn {
+    background: #16213e;
+    border: 3px solid #3a506b;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
+    padding: 18px 0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .answer-btn:active { transform: scale(0.95); }
+  .answer-btn.correct { border-color: #51cf66; background: #1e4620; }
+  .answer-btn.wrong { border-color: #ff6b6b; background: #4a1a1a; }
+
+  /* Out dots */
+  #count-display {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .out-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #ff6b6b;
+    transition: background 0.2s;
+  }
+  .out-dot.active { background: #ff6b6b; }
+
+  /* Pitch indicator */
+  #pitch-text {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+    min-height: 18px;
+  }
+
+  /* Overlays */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: #1a1a2eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 32px;
+    text-align: center;
+    overflow-y: auto;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h1 { font-size: 36px; margin-bottom: 8px; }
+  .overlay .subtitle { color: #888; font-size: 15px; margin-bottom: 24px; }
+
+  /* Difficulty buttons on start screen */
+  .diff-buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; margin-bottom: 20px; }
+  .diff-btn {
+    border: none;
+    color: #1a1a2e;
+    font-size: 20px;
+    font-weight: 800;
+    padding: 16px 0;
+    border-radius: 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .diff-btn:active { transform: scale(0.95); }
+  .diff-btn.easy { background: #51cf66; }
+  .diff-btn.hard { background: #ffd43b; }
+  .diff-btn.extreme { background: #ff6b6b; }
+
+  /* Start screen high scores */
+  .start-hs { width: 100%; max-width: 280px; margin-top: 4px; }
+  .start-hs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .start-hs-header span { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .start-hs-link {
+    background: none; border: none; color: #666; font-size: 12px;
+    cursor: pointer; text-decoration: underline; -webkit-tap-highlight-color: transparent;
+  }
+  .start-hs-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 13px;
+    color: #555;
+  }
+  .start-hs-row .initials { font-weight: 700; letter-spacing: 1px; color: #777; }
+  .start-hs-row .hs-score { color: #ffd700; font-weight: 600; }
+
+  /* Play again button */
+  .play-btn {
+    background: #51cf66;
+    color: #1a1a2e;
+    border: none;
+    font-size: 22px;
+    font-weight: 800;
+    padding: 16px 48px;
+    border-radius: 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .play-btn:active { transform: scale(0.95); }
+
+  /* Game over stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 24px;
+  }
+  .stat-box {
+    background: #16213e;
+    border-radius: 12px;
+    padding: 12px 8px;
+  }
+  .stat-box .stat-val { font-size: 28px; font-weight: 900; color: #ffd700; }
+  .stat-box .stat-label { font-size: 11px; color: #888; text-transform: uppercase; margin-top: 2px; }
+  .stat-box.wide { grid-column: span 2; }
+  .rating { font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+  .hit-breakdown { font-size: 13px; color: #aaa; margin-bottom: 20px; line-height: 1.8; }
+
+  /* High score entry */
+  .hs-entry { margin-bottom: 24px; }
+  .hs-entry h2 { font-size: 22px; color: #ffd700; margin-bottom: 12px; }
+  .hs-slots { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+  .hs-slot {
+    width: 48px;
+    height: 56px;
+    background: #16213e;
+    border: 2px solid #3a506b;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hs-slot.active { border-color: #ffd700; }
+  .hs-slot .letter { font-size: 28px; font-weight: 900; color: #fff; }
+  .hs-slot .arrows { font-size: 10px; color: #666; }
+  .hs-submit {
+    background: #ffd700;
+    color: #1a1a2e;
+    border: none;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 10px 32px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  /* High scores screen */
+  .hs-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .hs-tab {
+    background: #16213e;
+    border: 2px solid #3a506b;
+    color: #888;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hs-tab.active { border-color: #ffd700; color: #ffd700; }
+  .hs-list { width: 100%; max-width: 280px; margin-bottom: 24px; }
+  .hs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #ffffff10;
+    font-size: 16px;
+  }
+  .hs-row .rank { color: #888; width: 30px; }
+  .hs-row .initials { font-weight: 800; letter-spacing: 2px; flex: 1; }
+  .hs-row .hs-score { color: #ffd700; font-weight: 700; }
+  .hs-empty { color: #555; font-size: 14px; margin: 24px 0; }
+  .reset-btn {
+    background: none;
+    border: 1px solid #ff6b6b40;
+    color: #ff6b6b80;
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* Pause overlay */
+  #pause-screen {
+    position: fixed;
+    inset: 0;
+    background: #1a1a2ef0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    text-align: center;
+  }
+  #pause-screen.hidden { display: none; }
+  #pause-screen h1 { font-size: 42px; margin-bottom: 24px; color: #ffd700; }
+  .pause-buttons { display: flex; flex-direction: column; gap: 12px; width: 200px; }
+  .pause-btn {
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 0;
+    border-radius: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pause-btn:active { transform: scale(0.95); }
+  .pause-resume { background: #51cf66; color: #1a1a2e; }
+  .pause-quit { background: #ff6b6b40; color: #ff6b6b; }
+
+  /* Animations */
+  @keyframes shakeX {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .shake { animation: shakeX 0.4s ease; }
+
+  @keyframes flashGold {
+    0% { background: #ffd70050; }
+    100% { background: transparent; }
+  }
+  .flash-hr { animation: flashGold 0.6s ease; }
+
+  @keyframes bannerIn {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+    70% { transform: translate(-50%, -50%) scale(0.95); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes bannerOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div id="start-screen" class="overlay">
+  <h1>Base Run Math</h1>
+  <div class="subtitle">Solve fast. Hit big. Score runs.</div>
+  <div class="diff-buttons">
+    <button class="diff-btn easy" onclick="startGame('easy')">Easy</button>
+    <button class="diff-btn hard" onclick="startGame('hard')">Hard</button>
+    <button class="diff-btn extreme" onclick="startGame('extreme')">Extreme</button>
+  </div>
+  <div class="start-hs" id="start-hs"></div>
+  <button id="start-sound-toggle" onclick="toggleSound()"></button>
+</div>
+
+<!-- Game Over Screen -->
+<div id="gameover-screen" class="overlay hidden">
+  <h1 id="go-title">Game Over</h1>
+  <div class="rating" id="go-rating"></div>
+  <div class="stats-grid" id="go-stats"></div>
+  <div class="hit-breakdown" id="go-hits"></div>
+  <div id="hs-entry-area"></div>
+  <button class="play-btn" onclick="showStartScreen()">Play Again</button>
+</div>
+
+<!-- High Scores Screen -->
+<div id="highscores-screen" class="overlay hidden">
+  <h1>High Scores</h1>
+  <div class="hs-tabs" id="hs-tabs"></div>
+  <div class="hs-list" id="hs-list"></div>
+  <button class="play-btn" onclick="showStartScreen()" style="font-size:18px;padding:12px 36px;">Back</button>
+  <button class="reset-btn" onclick="resetScores()">Reset Scores</button>
+</div>
+
+<!-- Pause Screen -->
+<div id="pause-screen" class="hidden">
+  <h1>Paused</h1>
+  <div class="pause-buttons">
+    <button class="pause-btn pause-resume" onclick="resumeGame()">Resume</button>
+    <button class="pause-btn pause-quit" onclick="quitGame()">Quit</button>
+  </div>
+</div>
+
+<!-- Game UI -->
+<div id="scoreboard">
+  <div class="game-controls">
+    <button class="gc-btn" onclick="pauseGame()" title="Pause">&#x23F8;</button>
+    <button class="gc-btn" onclick="quitGame()" title="Quit">&#x2716;</button>
+  </div>
+  <div class="sb-side">
+    <div class="sb-group"><div class="label">Outs</div><div class="val outs-val" id="sb-outs">0</div></div>
+    <div class="sb-group"><div class="label">Streak</div><div class="val streak-val" id="sb-streak">0</div></div>
+  </div>
+  <div class="sb-group sb-center"><div class="label">Score</div><div class="val" id="sb-score">0</div></div>
+  <div class="sb-side">
+    <div class="sb-group"><div class="label">Avg</div><div class="val avg-val" id="sb-avg">&mdash;</div></div>
+    <div class="sb-group"><div class="label" id="sb-diff-label">Easy</div><div class="val diff-val" id="sb-diff">&#x26be;</div></div>
+  </div>
+  <button id="sound-toggle" onclick="toggleSound()"></button>
+</div>
+
+<div id="diamond-area">
+  <div id="diamond">
+    <div class="infield"></div>
+    <div class="base" id="home"></div>
+    <div class="base" id="first"></div>
+    <div class="base" id="second"></div>
+    <div class="base" id="third"></div>
+  </div>
+  <div id="result-banner"></div>
+</div>
+
+<div id="timer-wrap"><div id="timer-bar"></div></div>
+
+<div id="question-area">
+  <div id="pitch-text"></div>
+  <div id="count-display">
+    <div class="out-dot" id="o1"></div>
+    <div class="out-dot" id="o2"></div>
+    <div class="out-dot" id="o3"></div>
+  </div>
+  <div id="problem"></div>
+  <div id="answers"></div>
+</div>
+
+<script>
+// --- Difficulty Config ---
+var DIFFICULTY = {
+  easy:    { timer: 15, hr: 3, triple: 6, double: 12, tier: 1, label: 'Easy' },
+  hard:    { timer: 10, hr: 2, triple: 4, double: 8,  tier: 2, label: 'Hard' },
+  extreme: { timer: 5,  hr: 1.2, triple: 2.2, double: 3.5, tier: 3, label: 'Extreme' }
+};
+
+// --- Game State ---
+var state = {};
+var currentDifficulty = 'easy';
+var paused = false;
+var pausedTimeLeft = 0;
+
+function freshState() {
+  return {
+    score: 0, outs: 0, streak: 0, bestStreak: 0,
+    atBats: 0, hits: 0, singles: 0, doubles: 0, triples: 0, homers: 0,
+    correct: 0, total: 0,
+    bases: [false, false, false],
+    pitchTime: 0, timerInterval: null, answered: false,
+    totalResponseTime: 0, correctAnswers: 0,
+    colorTimeouts: []
+  };
+}
+
+// --- Web Audio API Sound Effects ---
+var audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type, volume) {
+  var ctx = getAudioCtx();
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  gain.gain.value = volume || 0.15;
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + duration);
+}
+
+function sfxSingle() {
+  playTone(523, 0.12, 'square', 0.12);
+  setTimeout(function() { playTone(659, 0.15, 'square', 0.12); }, 80);
+}
+
+function sfxDouble() {
+  playTone(523, 0.1, 'square', 0.12);
+  setTimeout(function() { playTone(659, 0.1, 'square', 0.12); }, 70);
+  setTimeout(function() { playTone(784, 0.15, 'square', 0.12); }, 140);
+}
+
+function sfxTriple() {
+  playTone(523, 0.08, 'square', 0.13);
+  setTimeout(function() { playTone(659, 0.08, 'square', 0.13); }, 60);
+  setTimeout(function() { playTone(784, 0.08, 'square', 0.13); }, 120);
+  setTimeout(function() { playTone(1047, 0.2, 'square', 0.13); }, 180);
+}
+
+function sfxHomeRun() {
+  // Triumphant fanfare — ascending arpeggio with sustain
+  var notes = [523, 659, 784, 1047, 1319];
+  for (var i = 0; i < notes.length; i++) {
+    (function(n, delay) {
+      setTimeout(function() { playTone(n, 0.15, 'square', 0.15); }, delay);
+    })(notes[i], i * 70);
+  }
+  // Final chord
+  setTimeout(function() {
+    playTone(1047, 0.4, 'triangle', 0.12);
+    playTone(1319, 0.4, 'triangle', 0.10);
+    playTone(1568, 0.4, 'triangle', 0.08);
+  }, 380);
+}
+
+function sfxOut() {
+  // Sad descending tone
+  playTone(440, 0.15, 'sawtooth', 0.08);
+  setTimeout(function() { playTone(330, 0.15, 'sawtooth', 0.08); }, 120);
+  setTimeout(function() { playTone(220, 0.25, 'sawtooth', 0.06); }, 240);
+}
+
+function playSound(type) {
+  if (!soundOn) return;
+  try {
+    if (type === 'single') sfxSingle();
+    else if (type === 'double') sfxDouble();
+    else if (type === 'triple') sfxTriple();
+    else if (type === 'homerun') sfxHomeRun();
+    else if (type === 'out') sfxOut();
+  } catch(e) {}
+}
+
+// --- Sound ---
+var soundOn = localStorage.getItem('baserunmath-sound') === 'true';
+
+function initSoundButtons() {
+  var icon = soundOn ? '\u{1F50A}' : '\u{1F507}';
+  var el1 = document.getElementById('sound-toggle');
+  var el2 = document.getElementById('start-sound-toggle');
+  if (el1) { el1.textContent = icon; el1.classList.toggle('on', soundOn); }
+  if (el2) {
+    el2.textContent = icon;
+    el2.style.cssText = 'position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;color:' + (soundOn ? '#ffd700' : '#555') + ';cursor:pointer;-webkit-tap-highlight-color:transparent;';
+  }
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  localStorage.setItem('baserunmath-sound', String(soundOn));
+  initSoundButtons();
+  // Play a test beep when turning on so user knows it works
+  if (soundOn) sfxSingle();
+}
+
+// --- High Scores ---
+function getHighScores() {
+  try {
+    return JSON.parse(localStorage.getItem('baserunmath-highscores')) || { easy: [], hard: [], extreme: [] };
+  } catch(e) { return { easy: [], hard: [], extreme: [] }; }
+}
+
+function saveHighScores(data) {
+  localStorage.setItem('baserunmath-highscores', JSON.stringify(data));
+}
+
+function isHighScore(score, diff) {
+  var scores = getHighScores()[diff];
+  return scores.length < 5 || score > scores[scores.length - 1].score;
+}
+
+function addHighScore(initials, score, diff) {
+  var data = getHighScores();
+  data[diff].push({ initials: initials, score: score, date: new Date().toISOString().slice(0,10) });
+  data[diff].sort(function(a, b) { return b.score - a.score; });
+  data[diff] = data[diff].slice(0, 5);
+  saveHighScores(data);
+}
+
+function resetScores() {
+  if (confirm('Reset all high scores?')) {
+    localStorage.removeItem('baserunmath-highscores');
+    renderHighScoresList(hsTabActive);
+  }
+}
+
+// --- Start Screen High Scores ---
+function renderStartHighScores() {
+  var data = getHighScores();
+  var el = document.getElementById('start-hs');
+  // Find the difficulty with the most scores to feature
+  var diffs = ['easy', 'hard', 'extreme'];
+  var hasAny = false;
+  var html = '<div class="start-hs-header"><span>Top Scores</span><button class="start-hs-link" onclick="showHighScores()">View All</button></div>';
+
+  for (var d = 0; d < diffs.length; d++) {
+    var diff = diffs[d];
+    var scores = data[diff];
+    if (scores && scores.length > 0) {
+      hasAny = true;
+      html += '<div style="font-size:11px;color:#555;margin-top:6px;text-transform:uppercase;">' + DIFFICULTY[diff].label + '</div>';
+      var show = Math.min(scores.length, 3);
+      for (var i = 0; i < show; i++) {
+        html += '<div class="start-hs-row"><span class="initials">' + scores[i].initials + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
+      }
+    }
+  }
+
+  if (!hasAny) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = html;
+}
+
+// --- Math Problem Generator ---
+function generateProblem(diff) {
+  var tier = DIFFICULTY[diff].tier;
+  var a, b, op, answer;
+
+  if (tier === 1) {
+    op = Math.random() < 0.5 ? '+' : '-';
+    a = randInt(2, 12);
+    b = randInt(2, 9);
+    if (op === '-' && b > a) { var t = a; a = b; b = t; }
+    answer = op === '+' ? a + b : a - b;
+  } else if (tier === 2) {
+    if (Math.random() < 0.7) {
+      op = Math.random() < 0.5 ? '+' : '-';
+      a = randInt(12, 50);
+      b = randInt(5, 30);
+      if (op === '-' && b > a) { var t = a; a = b; b = t; }
+      answer = op === '+' ? a + b : a - b;
+    } else {
+      a = randInt(2, 9);
+      b = randInt(2, 9);
+      op = '\u00d7';
+      answer = a * b;
+    }
+  } else {
+    // Extreme: harder multiplication, wider range
+    a = randInt(4, 12);
+    b = randInt(4, 12);
+    op = '\u00d7';
+    answer = a * b;
+  }
+
+  var display = a + ' ' + op + ' ' + b;
+  var choices = generateChoices(answer, tier);
+  return { display: display, answer: answer, choices: choices };
+}
+
+function generateChoices(answer, tier) {
+  var choices = [answer];
+  var range = tier === 3 ? 15 : tier === 2 ? 12 : 6;
+  var attempts = 0;
+  while (choices.length < 4 && attempts < 50) {
+    attempts++;
+    var offset = randInt(1, range) * (Math.random() < 0.5 ? 1 : -1);
+    var wrong = answer + offset;
+    if (wrong < 0) wrong = answer + Math.abs(offset);
+    if (wrong !== answer && choices.indexOf(wrong) === -1) choices.push(wrong);
+  }
+  return shuffle(choices);
+}
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function shuffle(arr) { for (var i = arr.length - 1; i > 0; i--) { var j = randInt(0, i); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+
+// --- UI Updates ---
+function updateScoreboard() {
+  document.getElementById('sb-score').textContent = state.score;
+  document.getElementById('sb-outs').textContent = state.outs;
+  document.getElementById('sb-streak').textContent = state.streak;
+  document.getElementById('sb-diff-label').textContent = DIFFICULTY[currentDifficulty].label;
+
+  if (state.correctAnswers > 0) {
+    document.getElementById('sb-avg').textContent = (state.totalResponseTime / state.correctAnswers).toFixed(1) + 's';
+  } else {
+    document.getElementById('sb-avg').innerHTML = '&mdash;';
+  }
+}
+
+function updateBases() {
+  document.getElementById('first').classList.toggle('occupied', state.bases[0]);
+  document.getElementById('second').classList.toggle('occupied', state.bases[1]);
+  document.getElementById('third').classList.toggle('occupied', state.bases[2]);
+}
+
+function updateOuts() {
+  for (var i = 1; i <= 3; i++) {
+    document.getElementById('o' + i).classList.toggle('active', i <= state.outs);
+  }
+}
+
+function showBanner(text, color, duration) {
+  duration = duration || 1200;
+  var el = document.getElementById('result-banner');
+  el.textContent = text;
+  el.style.color = color;
+  el.style.animation = 'bannerIn 0.35s ease forwards';
+  setTimeout(function() {
+    el.style.animation = 'bannerOut 0.3s ease forwards';
+  }, duration - 300);
+}
+
+// --- Timer ---
+function startTimer() {
+  var diff = DIFFICULTY[currentDifficulty];
+  state.pitchTime = 0;
+  var bar = document.getElementById('timer-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.style.background = '#51cf66';
+  bar.offsetWidth;
+
+  bar.style.transition = 'width ' + diff.timer + 's linear, background 0.3s';
+  bar.style.width = '0%';
+
+  // Clear any previous color timeouts
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  state.colorTimeouts = [
+    setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ffd43b'; }, diff.timer * 400),
+    setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ff6b6b'; }, diff.timer * 700)
+  ];
+
+  state.timerInterval = setInterval(function() {
+    if (paused) return;
+    state.pitchTime += 0.1;
+    if (state.pitchTime >= diff.timer) {
+      clearInterval(state.timerInterval);
+      if (!state.answered) handleTimeout();
+    }
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  var diff = DIFFICULTY[currentDifficulty];
+  var bar = document.getElementById('timer-bar');
+  var pct = Math.max(0, (1 - state.pitchTime / diff.timer) * 100);
+  bar.style.transition = 'none';
+  bar.style.width = pct + '%';
+}
+
+// --- Pause / Quit ---
+function pauseGame() {
+  if (paused || state.answered) return;
+  paused = true;
+  clearInterval(state.timerInterval);
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  // Freeze the timer bar
+  var diff = DIFFICULTY[currentDifficulty];
+  var bar = document.getElementById('timer-bar');
+  var pct = Math.max(0, (1 - state.pitchTime / diff.timer) * 100);
+  bar.style.transition = 'none';
+  bar.style.width = pct + '%';
+  pausedTimeLeft = diff.timer - state.pitchTime;
+  document.getElementById('pause-screen').classList.remove('hidden');
+}
+
+function resumeGame() {
+  if (!paused) return;
+  paused = false;
+  document.getElementById('pause-screen').classList.add('hidden');
+
+  // Resume the timer bar animation
+  var diff = DIFFICULTY[currentDifficulty];
+  var bar = document.getElementById('timer-bar');
+  bar.offsetWidth;
+  bar.style.transition = 'width ' + pausedTimeLeft + 's linear, background 0.3s';
+  bar.style.width = '0%';
+
+  // Resume color changes based on remaining time
+  var elapsed = state.pitchTime;
+  var yellowAt = diff.timer * 0.4;
+  var redAt = diff.timer * 0.7;
+  state.colorTimeouts = [];
+  if (elapsed < yellowAt) {
+    state.colorTimeouts.push(setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ffd43b'; }, (yellowAt - elapsed) * 1000));
+  }
+  if (elapsed < redAt) {
+    state.colorTimeouts.push(setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ff6b6b'; }, (redAt - elapsed) * 1000));
+  }
+
+  // Resume the interval
+  state.timerInterval = setInterval(function() {
+    if (paused) return;
+    state.pitchTime += 0.1;
+    if (state.pitchTime >= diff.timer) {
+      clearInterval(state.timerInterval);
+      if (!state.answered) handleTimeout();
+    }
+  }, 100);
+}
+
+function quitGame() {
+  clearInterval(state.timerInterval);
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  paused = false;
+  document.getElementById('pause-screen').classList.add('hidden');
+  showStartScreen();
+}
+
+// --- Core Game Logic ---
+function servePitch() {
+  if (paused) return;
+  state.answered = false;
+  var problem = generateProblem(currentDifficulty);
+  state.currentProblem = problem;
+
+  document.getElementById('problem').textContent = problem.display;
+  var tier = DIFFICULTY[currentDifficulty].tier;
+  document.getElementById('pitch-text').textContent =
+    tier === 1 ? 'Fastball' : tier === 2 ? 'Curveball' : 'Slider';
+
+  var answersEl = document.getElementById('answers');
+  answersEl.innerHTML = '';
+  problem.choices.forEach(function(choice) {
+    var btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = choice;
+    btn.onclick = function() { handleAnswer(choice, btn); };
+    answersEl.appendChild(btn);
+  });
+
+  startTimer();
+}
+
+function handleAnswer(choice, btn) {
+  if (state.answered || paused) return;
+  state.answered = true;
+  state.total++;
+  stopTimer();
+
+  var correct = choice === state.currentProblem.answer;
+  var time = state.pitchTime;
+  var diff = DIFFICULTY[currentDifficulty];
+
+  // Highlight buttons
+  var allBtns = document.querySelectorAll('.answer-btn');
+  for (var i = 0; i < allBtns.length; i++) {
+    allBtns[i].onclick = null;
+    if (parseInt(allBtns[i].textContent) === state.currentProblem.answer) {
+      allBtns[i].classList.add('correct');
+    }
+  }
+  if (!correct) btn.classList.add('wrong');
+
+  if (correct) {
+    state.correct++;
+    state.atBats++;
+    state.hits++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    state.totalResponseTime += time;
+    state.correctAnswers++;
+
+    var hitType, advanceBases, bannerText, bannerColor, sfxType;
+    if (time < diff.hr) {
+      hitType = 'homer'; state.homers++; advanceBases = 4;
+      bannerText = 'HOME RUN!'; bannerColor = '#ffd700'; sfxType = 'homerun';
+    } else if (time < diff.triple) {
+      hitType = 'triple'; state.triples++; advanceBases = 3;
+      bannerText = 'TRIPLE!'; bannerColor = '#51cf66'; sfxType = 'triple';
+    } else if (time < diff.double) {
+      hitType = 'double'; state.doubles++; advanceBases = 2;
+      bannerText = 'DOUBLE!'; bannerColor = '#74c0fc'; sfxType = 'double';
+    } else {
+      hitType = 'single'; state.singles++; advanceBases = 1;
+      bannerText = 'SINGLE!'; bannerColor = '#fff'; sfxType = 'single';
+    }
+
+    playSound(sfxType);
+    var runs = advanceRunners(advanceBases);
+    state.score += runs;
+    showBanner(bannerText, bannerColor);
+
+    if (hitType === 'homer') {
+      document.getElementById('diamond-area').classList.add('flash-hr');
+      setTimeout(function() { document.getElementById('diamond-area').classList.remove('flash-hr'); }, 600);
+    }
+  } else {
+    // Wrong answer = immediate OUT
+    state.atBats++;
+    state.streak = 0;
+    state.outs++;
+    playSound('out');
+    showBanner('OUT!', '#ff6b6b', 800);
+    document.getElementById('question-area').classList.add('shake');
+    setTimeout(function() { document.getElementById('question-area').classList.remove('shake'); }, 400);
+
+    if (state.outs >= 3) {
+      updateScoreboard();
+      updateOuts();
+      setTimeout(gameOver, 1400);
+      return;
+    }
+  }
+
+  updateScoreboard();
+  updateBases();
+  updateOuts();
+  setTimeout(servePitch, 1400);
+}
+
+function handleTimeout() {
+  state.answered = true;
+  state.total++;
+  state.atBats++;
+  state.streak = 0;
+  state.outs++;
+
+  var allBtns = document.querySelectorAll('.answer-btn');
+  for (var i = 0; i < allBtns.length; i++) {
+    allBtns[i].onclick = null;
+    if (parseInt(allBtns[i].textContent) === state.currentProblem.answer) {
+      allBtns[i].classList.add('correct');
+    }
+  }
+
+  playSound('out');
+  showBanner('TOO SLOW!', '#ff6b6b', 800);
+  document.getElementById('question-area').classList.add('shake');
+  setTimeout(function() { document.getElementById('question-area').classList.remove('shake'); }, 400);
+
+  if (state.outs >= 3) {
+    updateScoreboard();
+    updateOuts();
+    setTimeout(gameOver, 1400);
+    return;
+  }
+
+  updateScoreboard();
+  updateOuts();
+  setTimeout(servePitch, 1400);
+}
+
+function advanceRunners(bases) {
+  var runs = 0;
+  if (bases === 4) {
+    runs = 1 + state.bases.filter(function(b) { return b; }).length;
+    state.bases = [false, false, false];
+    return runs;
+  }
+  for (var i = 2; i >= 0; i--) {
+    if (state.bases[i]) {
+      state.bases[i] = false;
+      var newPos = i + bases;
+      if (newPos >= 3) { runs++; }
+      else { state.bases[newPos] = true; }
+    }
+  }
+  if (bases >= 3) { runs++; }
+  else { state.bases[bases - 1] = true; }
+  return runs;
+}
+
+// --- Game Flow ---
+function showStartScreen() {
+  document.getElementById('start-screen').classList.remove('hidden');
+  document.getElementById('gameover-screen').classList.add('hidden');
+  document.getElementById('highscores-screen').classList.add('hidden');
+  initSoundButtons();
+  renderStartHighScores();
+}
+
+function startGame(diff) {
+  currentDifficulty = diff;
+  state = freshState();
+  paused = false;
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('gameover-screen').classList.add('hidden');
+  document.getElementById('highscores-screen').classList.add('hidden');
+  document.getElementById('pause-screen').classList.add('hidden');
+  updateScoreboard();
+  updateBases();
+  updateOuts();
+  document.getElementById('problem').textContent = '';
+  document.getElementById('answers').innerHTML = '';
+  setTimeout(servePitch, 500);
+}
+
+function gameOver() {
+  clearInterval(state.timerInterval);
+
+  var rating, ratingColor;
+  if (state.score >= 10) { rating = 'Hall of Famer'; ratingColor = '#ffd700'; }
+  else if (state.score >= 6) { rating = 'MVP'; ratingColor = '#51cf66'; }
+  else if (state.score >= 3) { rating = 'All-Star'; ratingColor = '#74c0fc'; }
+  else { rating = 'Rookie'; ratingColor = '#aaa'; }
+
+  var pct = state.atBats > 0 ? Math.round((state.hits / state.atBats) * 100) : 0;
+  var avgTime = state.correctAnswers > 0 ? (state.totalResponseTime / state.correctAnswers).toFixed(1) + 's' : '\u2014';
+
+  document.getElementById('go-rating').innerHTML =
+    '<span style="color:' + ratingColor + '">' + rating + '</span>';
+
+  document.getElementById('go-stats').innerHTML =
+    '<div class="stat-box"><div class="stat-val">' + state.score + '</div><div class="stat-label">Runs Scored</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + state.hits + '</div><div class="stat-label">Hits</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + state.bestStreak + '</div><div class="stat-label">Best Streak</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + pct + '%</div><div class="stat-label">Hit Rate</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + avgTime + '</div><div class="stat-label">Avg Response</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + DIFFICULTY[currentDifficulty].label + '</div><div class="stat-label">Difficulty</div></div>';
+
+  document.getElementById('go-hits').innerHTML =
+    state.singles + ' Singles &middot; ' + state.doubles + ' Doubles &middot; ' + state.triples + ' Triples &middot; ' + state.homers + ' Home Runs';
+
+  // High score entry
+  var entryArea = document.getElementById('hs-entry-area');
+  if (state.score > 0 && isHighScore(state.score, currentDifficulty)) {
+    entryArea.innerHTML = buildHSEntry();
+    initHSEntry();
+  } else {
+    entryArea.innerHTML = '';
+  }
+
+  document.getElementById('gameover-screen').classList.remove('hidden');
+}
+
+// --- Arcade-Style Initial Entry ---
+function buildHSEntry() {
+  return '<div class="hs-entry">' +
+    '<h2>New High Score!</h2>' +
+    '<div class="hs-slots">' +
+      '<div class="hs-slot active" onclick="cycleSlot(0)"><div class="arrows">\u25b2</div><div class="letter" id="slot0">A</div><div class="arrows">\u25bc</div></div>' +
+      '<div class="hs-slot" onclick="cycleSlot(1)"><div class="arrows">\u25b2</div><div class="letter" id="slot1">A</div><div class="arrows">\u25bc</div></div>' +
+      '<div class="hs-slot" onclick="cycleSlot(2)"><div class="arrows">\u25b2</div><div class="letter" id="slot2">A</div><div class="arrows">\u25bc</div></div>' +
+    '</div>' +
+    '<button class="hs-submit" onclick="submitHighScore()">Save Score</button>' +
+  '</div>';
+}
+
+var hsLetters = [0, 0, 0];
+var ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function initHSEntry() {
+  hsLetters = [0, 0, 0];
+}
+
+function cycleSlot(idx) {
+  hsLetters[idx] = (hsLetters[idx] + 1) % 26;
+  document.getElementById('slot' + idx).textContent = ALPHA[hsLetters[idx]];
+  var slots = document.querySelectorAll('.hs-slot');
+  for (var i = 0; i < slots.length; i++) {
+    slots[i].classList.toggle('active', i === idx);
+  }
+}
+
+function submitHighScore() {
+  var initials = ALPHA[hsLetters[0]] + ALPHA[hsLetters[1]] + ALPHA[hsLetters[2]];
+  addHighScore(initials, state.score, currentDifficulty);
+  document.getElementById('hs-entry-area').innerHTML =
+    '<div style="color:#51cf66;font-weight:700;margin-bottom:16px;">Saved! ' + initials + ' \u2014 ' + state.score + ' runs</div>';
+}
+
+// --- High Scores Screen ---
+var hsTabActive = 'easy';
+
+function showHighScores() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('gameover-screen').classList.add('hidden');
+  document.getElementById('highscores-screen').classList.remove('hidden');
+
+  var diffs = ['easy', 'hard', 'extreme'];
+  var tabsHtml = '';
+  for (var i = 0; i < diffs.length; i++) {
+    var d = diffs[i];
+    tabsHtml += '<button class="hs-tab' + (d === hsTabActive ? ' active' : '') + '" onclick="switchHSTab(\'' + d + '\')">' + DIFFICULTY[d].label + '</button>';
+  }
+  document.getElementById('hs-tabs').innerHTML = tabsHtml;
+  renderHighScoresList(hsTabActive);
+}
+
+function switchHSTab(diff) {
+  hsTabActive = diff;
+  var tabs = document.querySelectorAll('.hs-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  var diffs = ['easy', 'hard', 'extreme'];
+  var idx = diffs.indexOf(diff);
+  if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+  renderHighScoresList(diff);
+}
+
+function renderHighScoresList(diff) {
+  var scores = getHighScores()[diff];
+  var listEl = document.getElementById('hs-list');
+
+  if (!scores || scores.length === 0) {
+    listEl.innerHTML = '<div class="hs-empty">No scores yet. Play to set one!</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < scores.length; i++) {
+    html += '<div class="hs-row"><span class="rank">' + (i+1) + '.</span><span class="initials">' + scores[i].initials + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
+  }
+  listEl.innerHTML = html;
+}
+
+// --- Init ---
+initSoundButtons();
+renderStartHighScores();
+</script>
+</body>
+</html>
