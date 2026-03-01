@@ -843,8 +843,10 @@ var DIFFICULTY = {
 var PITCH_READ = {
   easy:    { sweep: 3.5, spotWidth: 0.40 },
   hard:    { sweep: 2.5, spotWidth: 0.28 },
-  extreme: { sweep: 1.5, spotWidth: 0.16 }
+  extreme: { sweep: 1.5, spotWidth: 0.10 }
 };
+
+var MAX_PITCHES = 20;
 
 // ===== CONSTANTS =====
 var COLORS = [
@@ -1339,6 +1341,13 @@ function replayGame() {
 
 function servePitch() {
   if (paused) return;
+
+  // Max pitch count reached — game over
+  if (state.atBats >= MAX_PITCHES) {
+    gameOver();
+    return;
+  }
+
   state.answered = false;
 
   // Show timer for non-Pitch-Read modes, hide for Pitch Read
@@ -1349,7 +1358,8 @@ function servePitch() {
   }
 
   var info = MODE_INFO[currentMode];
-  document.getElementById('pitch-text').textContent = info.name + ' \u00b7 ' + DIFFICULTY[currentDifficulty].label;
+  var pitchNum = state.atBats + 1;
+  document.getElementById('pitch-text').textContent = 'Pitch ' + pitchNum + '/' + MAX_PITCHES + ' \u00b7 ' + info.name;
 
   // Dispatch to mode setup
   if (currentMode === 'color-conflict') setupColorConflict();
