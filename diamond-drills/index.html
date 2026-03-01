@@ -1604,7 +1604,10 @@ function setupShapeSnap() {
 
   // Build UI - prompt directly above grid (fixes Shape Snap prompt placement)
   var content = document.getElementById('mode-content');
-  var html = '<div class="mode-prompt" style="margin-bottom:16px;">Tap the <span style="color:' + targetColor.hex + '">' + targetColor.name.toLowerCase() + ' ' + SHAPE_LABELS[targetShape].toLowerCase() + '</span></div>';
+  // Pick a random color for the prompt text (NOT the target color — adds confusion)
+  var promptColor;
+  do { promptColor = pick(COLORS); } while (promptColor.name === targetColor.name);
+  var html = '<div class="mode-prompt" style="margin-bottom:16px;">Tap the <span style="color:' + promptColor.hex + '">' + targetColor.name.toLowerCase() + ' ' + SHAPE_LABELS[targetShape].toLowerCase() + '</span></div>';
   html += '<div class="shape-grid">';
   for (var i = 0; i < cells.length; i++) {
     var cell = cells[i];
