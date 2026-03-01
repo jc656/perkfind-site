@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Diamond Drills</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #fff;
+    overflow: hidden;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .hidden { display: none !important; }
+
+  /* ===== OVERLAYS (shared) ===== */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: #1a1a2eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 32px;
+    text-align: center;
+    overflow-y: auto;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h1 { font-size: 36px; margin-bottom: 8px; }
+  .overlay .subtitle { color: #888; font-size: 15px; margin-bottom: 24px; }
+
+  /* ===== HOME SCREEN ===== */
+  #home-screen { background: #1a1a2e; }
+  #home-screen h1 {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 340px;
+    margin-bottom: 24px;
+  }
+  .mode-card {
+    background: #16213e;
+    border: 3px solid #3a506b;
+    border-radius: 16px;
+    padding: 18px 12px;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-card:active { transform: scale(0.95); }
+  .mode-card .mode-icon { font-size: 32px; }
+  .mode-card .mode-name { font-size: 15px; font-weight: 800; }
+  .mode-card .mode-desc { font-size: 11px; color: #888; line-height: 1.3; }
+
+  .mode-card[data-mode="color-conflict"] { border-color: #b197fc40; }
+  .mode-card[data-mode="color-conflict"]:active { border-color: #b197fc; }
+  .mode-card[data-mode="color-conflict"] .mode-name { color: #b197fc; }
+
+  .mode-card[data-mode="shape-snap"] { border-color: #74c0fc40; }
+  .mode-card[data-mode="shape-snap"]:active { border-color: #74c0fc; }
+  .mode-card[data-mode="shape-snap"] .mode-name { color: #74c0fc; }
+
+  .mode-card[data-mode="quick-math"] { border-color: #ffd70040; }
+  .mode-card[data-mode="quick-math"]:active { border-color: #ffd700; }
+  .mode-card[data-mode="quick-math"] .mode-name { color: #ffd700; }
+
+  .mode-card[data-mode="go-nogo"] { border-color: #51cf6640; }
+  .mode-card[data-mode="go-nogo"]:active { border-color: #51cf66; }
+  .mode-card[data-mode="go-nogo"] .mode-name { color: #51cf66; }
+
+  .home-bottom {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .home-btn {
+    background: none;
+    border: 1px solid #3a506b;
+    color: #888;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .home-btn:active { background: #ffffff10; }
+
+  /* ===== DIFFICULTY SELECT ===== */
+  #diff-screen { background: #1a1a2e; }
+  .diff-buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; margin-bottom: 20px; }
+  .diff-btn {
+    border: none;
+    color: #1a1a2e;
+    font-size: 20px;
+    font-weight: 800;
+    padding: 16px 0;
+    border-radius: 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .diff-btn:active { transform: scale(0.95); }
+  .diff-btn.easy { background: #51cf66; }
+  .diff-btn.hard { background: #ffd43b; }
+  .diff-btn.extreme { background: #ff6b6b; }
+
+  .back-link {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Start screen high scores */
+  .start-hs { width: 100%; max-width: 280px; margin-top: 4px; }
+  .start-hs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .start-hs-header span { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .start-hs-link {
+    background: none; border: none; color: #666; font-size: 12px;
+    cursor: pointer; text-decoration: underline; -webkit-tap-highlight-color: transparent;
+  }
+  .start-hs-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 13px;
+    color: #555;
+  }
+  .start-hs-row .initials { font-weight: 700; letter-spacing: 1px; color: #777; }
+  .start-hs-row .hs-score { color: #ffd700; font-weight: 600; }
+
+  /* ===== SCOREBOARD ===== */
+  #scoreboard {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+    background: #0f0f23;
+    font-weight: 700;
+    flex-shrink: 0;
+    gap: 16px;
+    position: relative;
+  }
+  #scoreboard .label { color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sb-group { text-align: center; }
+  .sb-side { display: flex; gap: 14px; align-items: center; }
+  .sb-side .val { font-size: 16px; }
+  .sb-center .val { font-size: 36px; font-weight: 900; color: #ffd700; line-height: 1; }
+  .sb-center .label { color: #ffd700; }
+  .outs-val { color: #ff6b6b; }
+  .streak-val { color: #51cf66; }
+  .avg-val { color: #74c0fc; }
+  .diff-val { color: #aaa; }
+
+  /* Game control buttons (pause/quit) */
+  .game-controls {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+  .gc-btn {
+    background: none;
+    border: 1px solid #ffffff20;
+    color: #888;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gc-btn:active { background: #ffffff10; }
+
+  /* Sound toggle */
+  #sound-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 10;
+  }
+  #sound-toggle.on { color: #ffd700; }
+
+  /* ===== DIAMOND AREA ===== */
+  #diamond-area {
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #2d5a27 0%, #3a7a32 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    position: relative;
+    height: 180px;
+  }
+  #diamond {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    transform: rotate(45deg);
+  }
+  .base {
+    width: 20px;
+    height: 20px;
+    background: #f5f0e1;
+    border: 2px solid #c9b98a;
+    position: absolute;
+    transition: background 0.3s;
+  }
+  .base.occupied { background: #ffd700; border-color: #ffaa00; box-shadow: 0 0 10px #ffd700; }
+  #home { bottom: -10px; left: 50%; transform: translateX(-50%) rotate(-45deg); border-radius: 2px; }
+  #first { right: -10px; top: 50%; transform: translateY(-50%) rotate(-45deg); border-radius: 2px; }
+  #second { top: -10px; left: 50%; transform: translateX(-50%) rotate(-45deg); border-radius: 2px; }
+  #third { left: -10px; top: 50%; transform: translateY(-50%) rotate(-45deg); border-radius: 2px; }
+  .infield {
+    position: absolute;
+    inset: 15px;
+    background: #c4956a40;
+    border-radius: 3px;
+  }
+
+  /* Result banner */
+  #result-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 2px 2px 4px #00000080;
+    z-index: 10;
+    white-space: nowrap;
+    transition: none;
+  }
+
+  /* ===== TIMER BAR ===== */
+  #timer-wrap {
+    height: 6px;
+    background: #333;
+    flex-shrink: 0;
+  }
+  #timer-bar {
+    height: 100%;
+    background: #51cf66;
+    width: 100%;
+    transition: width linear, background 0.3s;
+  }
+
+  /* ===== QUESTION AREA ===== */
+  #question-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    min-height: 0;
+  }
+
+  /* Out dots */
+  #count-display {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .out-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #ff6b6b;
+    transition: background 0.2s;
+  }
+  .out-dot.active { background: #ff6b6b; }
+
+  /* Pitch text */
+  #pitch-text {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+    min-height: 18px;
+  }
+
+  /* Mode content container */
+  #mode-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ===== COLOR CONFLICT MODE ===== */
+  .mode-prompt {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffd700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .mode-hint {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  .stroop-word {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    min-height: 64px;
+    line-height: 1.1;
+  }
+  .stroop-buttons {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+    max-width: 300px;
+  }
+  .stroop-buttons.cols-2 { grid-template-columns: 1fr 1fr; }
+  .stroop-buttons.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .stroop-btn {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 4px solid #3a506b;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    max-width: 90px;
+    width: 100%;
+    justify-self: center;
+  }
+  .stroop-btn:active { transform: scale(0.9); }
+  .stroop-btn.correct { border-color: #51cf66; box-shadow: 0 0 20px #51cf6680; }
+  .stroop-btn.wrong { border-color: #ff6b6b; box-shadow: 0 0 20px #ff6b6b80; }
+
+  /* ===== SHAPE SNAP MODE ===== */
+  .shape-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 1;
+  }
+  .shape-cell {
+    background: #16213e;
+    border: 3px solid #3a506b;
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .shape-cell:active { transform: scale(0.93); }
+  .shape-cell.correct { border-color: #51cf66; background: #1e4620; }
+  .shape-cell.wrong { border-color: #ff6b6b; background: #4a1a1a; }
+  .shape {
+    width: 48px;
+    height: 48px;
+  }
+  .shape.circle { border-radius: 50%; }
+  .shape.square { border-radius: 6px; }
+  .shape.triangle {
+    clip-path: polygon(50% 5%, 5% 95%, 95% 95%);
+    width: 52px;
+    height: 48px;
+  }
+  .shape.diamond-shape {
+    width: 40px;
+    height: 40px;
+    transform: rotate(45deg);
+    border-radius: 4px;
+  }
+
+  /* ===== QUICK MATH MODE ===== */
+  .math-expression {
+    font-size: 36px;
+    font-weight: 900;
+    color: #ffd700;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+  .math-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
+  }
+  .math-cell {
+    background: #16213e;
+    border: 3px solid #3a506b;
+    border-radius: 14px;
+    padding: 18px 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+  }
+  .math-cell:active { transform: scale(0.93); }
+  .math-cell.correct { border-color: #51cf66; background: #1e4620; }
+  .math-cell.wrong { border-color: #ff6b6b; background: #4a1a1a; }
+
+  /* ===== PITCH READ MODE ===== */
+  .timing-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 24px;
+  }
+  .timing-label {
+    font-size: 14px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .timing-track {
+    width: 100%;
+    max-width: 320px;
+    height: 48px;
+    background: #16213e;
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+    border: 3px solid #3a506b;
+  }
+  .timing-sweetspot {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: #ffd70020;
+    border-left: 2px solid #ffd70080;
+    border-right: 2px solid #ffd70080;
+  }
+  .timing-sweetspot-inner {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: #ffd70015;
+    border-left: 1px dashed #ffd70040;
+    border-right: 1px dashed #ffd70040;
+  }
+  .timing-indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: 6px;
+    background: #fff;
+    border-radius: 3px;
+    left: 0%;
+    box-shadow: 0 0 8px #ffffff80;
+    transition: none;
+  }
+  .timing-indicator.hit { background: #51cf66; box-shadow: 0 0 12px #51cf66; }
+  .timing-indicator.miss { background: #ff6b6b; box-shadow: 0 0 12px #ff6b6b; }
+  .swing-btn {
+    width: 100%;
+    max-width: 300px;
+    background: #16213e;
+    border: 4px solid #ffd700;
+    color: #ffd700;
+    font-size: 26px;
+    font-weight: 900;
+    padding: 20px 0;
+    border-radius: 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: transform 0.1s;
+  }
+  .swing-btn:active { transform: scale(0.95); background: #1e2a4a; }
+  .swing-btn.disabled { opacity: 0.3; pointer-events: none; }
+
+  /* ===== GAME OVER ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 24px;
+  }
+  .stat-box {
+    background: #16213e;
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-box .stat-val { font-size: 28px; font-weight: 900; color: #ffd700; }
+  .stat-box .stat-label { font-size: 11px; color: #888; text-transform: uppercase; margin-top: 2px; }
+  .stat-box.wide { grid-column: span 2; }
+  .rating { font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+  .hit-breakdown { font-size: 13px; color: #aaa; margin-bottom: 20px; line-height: 1.8; }
+  .go-mode-label { font-size: 14px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+  .play-btn {
+    background: #51cf66;
+    color: #1a1a2e;
+    border: none;
+    font-size: 22px;
+    font-weight: 800;
+    padding: 16px 48px;
+    border-radius: 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .play-btn:active { transform: scale(0.95); }
+
+  /* ===== HIGH SCORE ENTRY ===== */
+  .hs-entry { margin-bottom: 24px; }
+  .hs-entry h2 { font-size: 22px; color: #ffd700; margin-bottom: 12px; }
+  .hs-slots { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+  .hs-slot {
+    width: 48px;
+    height: 56px;
+    background: #16213e;
+    border: 2px solid #3a506b;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hs-slot.active { border-color: #ffd700; }
+  .hs-slot .letter { font-size: 28px; font-weight: 900; color: #fff; }
+  .hs-slot .arrows { font-size: 10px; color: #666; }
+  .hs-submit {
+    background: #ffd700;
+    color: #1a1a2e;
+    border: none;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 10px 32px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  /* ===== HIGH SCORES SCREEN ===== */
+  .hs-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; justify-content: center; }
+  .hs-tab {
+    background: #16213e;
+    border: 2px solid #3a506b;
+    color: #888;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hs-tab.active { border-color: #ffd700; color: #ffd700; }
+  .hs-list { width: 100%; max-width: 280px; margin-bottom: 24px; }
+  .hs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #ffffff10;
+    font-size: 16px;
+  }
+  .hs-row .rank { color: #888; width: 30px; }
+  .hs-row .initials { font-weight: 800; letter-spacing: 2px; flex: 1; }
+  .hs-row .hs-score { color: #ffd700; font-weight: 700; }
+  .hs-empty { color: #555; font-size: 14px; margin: 24px 0; }
+  .reset-btn {
+    background: none;
+    border: 1px solid #ff6b6b40;
+    color: #ff6b6b80;
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* ===== PAUSE SCREEN ===== */
+  #pause-screen {
+    position: fixed;
+    inset: 0;
+    background: #1a1a2ef0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    text-align: center;
+  }
+  #pause-screen h1 { font-size: 42px; margin-bottom: 24px; color: #ffd700; }
+  .pause-buttons { display: flex; flex-direction: column; gap: 12px; width: 200px; }
+  .pause-btn {
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 0;
+    border-radius: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pause-btn:active { transform: scale(0.95); }
+  .pause-resume { background: #51cf66; color: #1a1a2e; }
+  .pause-quit { background: #ff6b6b40; color: #ff6b6b; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes shakeX {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .shake { animation: shakeX 0.4s ease; }
+
+  @keyframes flashGold {
+    0% { background: #ffd70050; }
+    100% { background: transparent; }
+  }
+  .flash-hr { animation: flashGold 0.6s ease; }
+
+  @keyframes bannerIn {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+    70% { transform: translate(-50%, -50%) scale(0.95); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes bannerOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+  }
+
+  /* ===== MOBILE SCALING ===== */
+  @media (max-height: 700px) {
+    #diamond-area { height: 120px; padding: 6px 0; }
+    #diamond { width: 95px; height: 95px; }
+    .base { width: 16px; height: 16px; }
+    #result-banner { font-size: 22px; }
+    #scoreboard { padding: 6px 10px; gap: 12px; }
+    .sb-center .val { font-size: 28px; }
+    .sb-side .val { font-size: 14px; }
+    .out-dot { width: 12px; height: 12px; }
+    .stroop-word { font-size: 40px; margin-bottom: 18px; }
+    .stroop-btn { max-width: 72px; }
+    .math-expression { font-size: 28px; margin-bottom: 14px; }
+    .math-cell { padding: 14px 0; font-size: 24px; }
+    .shape { width: 38px; height: 38px; }
+    .shape.triangle { width: 42px; height: 38px; }
+    .timing-track { height: 40px; }
+    .swing-btn { font-size: 22px; padding: 16px 0; }
+    .mode-prompt { font-size: 17px; }
+  }
+  @media (max-height: 580px) {
+    #diamond-area { height: 90px; padding: 4px 0; }
+    #diamond { width: 70px; height: 70px; }
+    .base { width: 13px; height: 13px; }
+    #result-banner { font-size: 18px; }
+    .stroop-word { font-size: 34px; margin-bottom: 12px; }
+    .stroop-btn { max-width: 60px; }
+    .shape { width: 32px; height: 32px; }
+    .shape.triangle { width: 36px; height: 32px; }
+    .math-expression { font-size: 24px; margin-bottom: 10px; }
+    .math-cell { padding: 12px 0; font-size: 20px; }
+    .timing-track { height: 34px; }
+    .swing-btn { font-size: 18px; padding: 12px 0; }
+  }
+  @media (max-height: 500px) {
+    #home-screen h1 { font-size: 28px; }
+    .mode-card { padding: 10px 6px; }
+    .mode-card .mode-desc { display: none; }
+    .mode-card .mode-icon { font-size: 24px; }
+  }
+  @media (max-width: 360px) {
+    .mode-grid { max-width: 300px; }
+    .shape-grid, .math-grid { max-width: 260px; }
+    .stroop-buttons { max-width: 260px; }
+    .timing-track { max-width: 280px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Home Screen -->
+<div id="home-screen" class="overlay">
+  <h1>Diamond Drills</h1>
+  <div class="subtitle">Train your brain. Sharpen your game.</div>
+  <div class="mode-grid" id="mode-grid"></div>
+  <div class="home-bottom">
+    <button class="home-btn" onclick="showHighScores()">High Scores</button>
+    <button class="home-btn" onclick="toggleSound()" id="home-sound-btn"></button>
+  </div>
+</div>
+
+<!-- Difficulty Select Screen -->
+<div id="diff-screen" class="overlay hidden">
+  <h1 id="diff-mode-name"></h1>
+  <div class="subtitle" id="diff-mode-desc"></div>
+  <div class="diff-buttons">
+    <button class="diff-btn easy" onclick="startGame('easy')">Easy</button>
+    <button class="diff-btn hard" onclick="startGame('hard')">Hard</button>
+    <button class="diff-btn extreme" onclick="startGame('extreme')">Extreme</button>
+  </div>
+  <div class="start-hs" id="diff-hs"></div>
+  <button class="back-link" onclick="showHome()">&larr; Back</button>
+</div>
+
+<!-- Game Over Screen -->
+<div id="gameover-screen" class="overlay hidden">
+  <h1 id="go-title">Game Over</h1>
+  <div class="go-mode-label" id="go-mode-label"></div>
+  <div class="rating" id="go-rating"></div>
+  <div class="stats-grid" id="go-stats"></div>
+  <div class="hit-breakdown" id="go-hits"></div>
+  <div id="hs-entry-area"></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="play-btn" onclick="replayGame()">Play Again</button>
+    <button class="play-btn" onclick="showHome()" style="background:#16213e;color:#ffd700;border:2px solid #ffd700;font-size:18px;padding:16px 32px;">Home</button>
+    <button class="play-btn" onclick="showHighScores()" style="background:#16213e;color:#ffd700;border:2px solid #ffd700;font-size:18px;padding:16px 32px;">High Scores</button>
+  </div>
+</div>
+
+<!-- High Scores Screen -->
+<div id="highscores-screen" class="overlay hidden">
+  <h1>High Scores</h1>
+  <div class="hs-tabs" id="hs-mode-tabs"></div>
+  <div class="hs-tabs" id="hs-diff-tabs"></div>
+  <div class="hs-list" id="hs-list"></div>
+  <button class="play-btn" onclick="showHome()" style="font-size:18px;padding:12px 36px;">Back</button>
+  <button class="reset-btn" onclick="resetScores()">Reset All Scores</button>
+</div>
+
+<!-- Pause Screen -->
+<div id="pause-screen" class="hidden">
+  <h1>Paused</h1>
+  <div class="pause-buttons">
+    <button class="pause-btn pause-resume" onclick="resumeGame()">Resume</button>
+    <button class="pause-btn pause-quit" onclick="quitGame()">Quit</button>
+  </div>
+</div>
+
+<!-- Game UI -->
+<div id="scoreboard">
+  <div class="game-controls">
+    <button class="gc-btn" onclick="pauseGame()" title="Pause">&#x23F8;</button>
+    <button class="gc-btn" onclick="quitGame()" title="Quit">&#x2716;</button>
+  </div>
+  <div class="sb-side">
+    <div class="sb-group"><div class="label">Outs</div><div class="val outs-val" id="sb-outs">0</div></div>
+    <div class="sb-group"><div class="label">Streak</div><div class="val streak-val" id="sb-streak">0</div></div>
+  </div>
+  <div class="sb-group sb-center"><div class="label">Score</div><div class="val" id="sb-score">0</div></div>
+  <div class="sb-side">
+    <div class="sb-group"><div class="label">Avg</div><div class="val avg-val" id="sb-avg">&mdash;</div></div>
+    <div class="sb-group"><div class="label" id="sb-mode-label">Easy</div><div class="val diff-val" id="sb-mode-icon">&#x26be;</div></div>
+  </div>
+  <button id="sound-toggle" onclick="toggleSound()"></button>
+</div>
+
+<div id="diamond-area">
+  <div id="diamond">
+    <div class="infield"></div>
+    <div class="base" id="home"></div>
+    <div class="base" id="first"></div>
+    <div class="base" id="second"></div>
+    <div class="base" id="third"></div>
+  </div>
+  <div id="result-banner"></div>
+</div>
+
+<div id="timer-wrap"><div id="timer-bar"></div></div>
+
+<div id="question-area">
+  <div id="pitch-text"></div>
+  <div id="count-display">
+    <div class="out-dot" id="o1"></div>
+    <div class="out-dot" id="o2"></div>
+    <div class="out-dot" id="o3"></div>
+  </div>
+  <div id="mode-content"></div>
+</div>
+
+<script>
+// ===== DIFFICULTY CONFIG (ported from BRM) =====
+var DIFFICULTY = {
+  easy:    { timer: 15, hr: 3, triple: 6, double: 12, tier: 1, label: 'Easy' },
+  hard:    { timer: 10, hr: 2, triple: 4, double: 8,  tier: 2, label: 'Hard' },
+  extreme: { timer: 2,  hr: 0.75, triple: 1, double: 1.5, tier: 3, label: 'Extreme' }
+};
+
+// Pitch Read has its own timing config
+var PITCH_READ = {
+  easy:    { sweep: 3.5, spotWidth: 0.40 },
+  hard:    { sweep: 2.5, spotWidth: 0.28 },
+  extreme: { sweep: 1.5, spotWidth: 0.16 }
+};
+
+// ===== CONSTANTS =====
+var COLORS = [
+  { name: 'RED', hex: '#ff6b6b' },
+  { name: 'BLUE', hex: '#74c0fc' },
+  { name: 'GREEN', hex: '#51cf66' },
+  { name: 'YELLOW', hex: '#ffd43b' },
+  { name: 'PURPLE', hex: '#b197fc' },
+  { name: 'ORANGE', hex: '#ffa94d' }
+];
+
+var SHAPES = ['circle', 'square', 'triangle', 'diamond-shape'];
+var SHAPE_LABELS = { circle: 'Circle', square: 'Square', triangle: 'Triangle', 'diamond-shape': 'Diamond' };
+
+var MODE_INFO = {
+  'color-conflict': { name: 'Color Conflict', accent: '#b197fc', icon: '\u{1F3A8}', desc: 'Read the ink, ignore the word' },
+  'shape-snap':     { name: 'Shape Snap',     accent: '#74c0fc', icon: '\u{1F537}', desc: 'Find the shape fast' },
+  'quick-math':     { name: 'Quick Math',     accent: '#ffd700', icon: '\u{1F522}', desc: 'Solve it, find the answer' },
+  'go-nogo':        { name: 'Pitch Read',     accent: '#51cf66', icon: '\u26be',    desc: 'Time your swing perfectly' }
+};
+var MODE_KEYS = ['color-conflict', 'shape-snap', 'quick-math', 'go-nogo'];
+
+// ===== STATE =====
+var state = {};
+var currentMode = null;
+var currentDifficulty = 'easy';
+var paused = false;
+var pausedTimeLeft = 0;
+var sweepAnimFrame = null;
+
+function freshState() {
+  return {
+    score: 0, outs: 0, streak: 0, bestStreak: 0,
+    atBats: 0, hits: 0, singles: 0, doubles: 0, triples: 0, homers: 0,
+    correct: 0, total: 0,
+    bases: [false, false, false],
+    pitchTime: 0, timerInterval: null, answered: false,
+    totalResponseTime: 0, correctAnswers: 0,
+    colorTimeouts: [],
+    gameStartTime: 0, gameElapsed: 0,
+    currentTimerDuration: 0,
+    timerStartTime: 0, totalPauseTime: 0, pauseStartTime: 0,
+    // Pitch Read specific
+    sweepStart: 0, sweepDuration: 0,
+    sweetSpotCenter: 0, sweetSpotWidth: 0
+  };
+}
+
+// ===== UTILITIES =====
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = randInt(0, i);
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+function formatTime(secs) {
+  var m = Math.floor(secs / 60);
+  var s = secs % 60;
+  return m > 0 ? m + ':' + (s < 10 ? '0' : '') + s : s + 's';
+}
+
+// ===== WEB AUDIO SOUND EFFECTS (ported from BRM) =====
+var audioCtx = null;
+var soundOn = localStorage.getItem('dd-sound') === 'true';
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type, volume) {
+  if (!soundOn) return;
+  try {
+    var ctx = getAudioCtx();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = freq;
+    gain.gain.value = volume || 0.15;
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function sfxSingle() {
+  playTone(523, 0.12, 'square', 0.12);
+  setTimeout(function() { playTone(659, 0.15, 'square', 0.12); }, 80);
+}
+function sfxDouble() {
+  playTone(523, 0.1, 'square', 0.12);
+  setTimeout(function() { playTone(659, 0.1, 'square', 0.12); }, 70);
+  setTimeout(function() { playTone(784, 0.15, 'square', 0.12); }, 140);
+}
+function sfxTriple() {
+  playTone(523, 0.08, 'square', 0.13);
+  setTimeout(function() { playTone(659, 0.08, 'square', 0.13); }, 60);
+  setTimeout(function() { playTone(784, 0.08, 'square', 0.13); }, 120);
+  setTimeout(function() { playTone(1047, 0.2, 'square', 0.13); }, 180);
+}
+function sfxHomeRun() {
+  var notes = [523, 659, 784, 1047, 1319];
+  for (var i = 0; i < notes.length; i++) {
+    (function(n, delay) {
+      setTimeout(function() { playTone(n, 0.15, 'square', 0.15); }, delay);
+    })(notes[i], i * 70);
+  }
+  setTimeout(function() {
+    playTone(1047, 0.4, 'triangle', 0.12);
+    playTone(1319, 0.4, 'triangle', 0.10);
+    playTone(1568, 0.4, 'triangle', 0.08);
+  }, 380);
+}
+function sfxOut() {
+  playTone(440, 0.15, 'sawtooth', 0.08);
+  setTimeout(function() { playTone(330, 0.15, 'sawtooth', 0.08); }, 120);
+  setTimeout(function() { playTone(220, 0.25, 'sawtooth', 0.06); }, 240);
+}
+
+function playSound(type) {
+  if (!soundOn) return;
+  try {
+    if (type === 'single') sfxSingle();
+    else if (type === 'double') sfxDouble();
+    else if (type === 'triple') sfxTriple();
+    else if (type === 'homerun') sfxHomeRun();
+    else if (type === 'out') sfxOut();
+  } catch(e) {}
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  localStorage.setItem('dd-sound', String(soundOn));
+  initSoundButtons();
+  if (soundOn) sfxSingle();
+}
+
+function initSoundButtons() {
+  var icon = soundOn ? '\u{1F50A}' : '\u{1F507}';
+  var el1 = document.getElementById('sound-toggle');
+  var el2 = document.getElementById('home-sound-btn');
+  if (el1) { el1.textContent = icon; el1.classList.toggle('on', soundOn); }
+  if (el2) { el2.textContent = icon; }
+}
+
+// ===== HIGH SCORES (per mode + difficulty) =====
+function getHighScores() {
+  try {
+    return JSON.parse(localStorage.getItem('diamond-drills-hs')) || {};
+  } catch(e) { return {}; }
+}
+
+function saveHighScores(data) {
+  localStorage.setItem('diamond-drills-hs', JSON.stringify(data));
+}
+
+function getScoresForModeDiff(mode, diff) {
+  var data = getHighScores();
+  if (!data[mode]) return [];
+  if (!data[mode][diff]) return [];
+  return data[mode][diff];
+}
+
+function isHighScore(score, mode, diff) {
+  var scores = getScoresForModeDiff(mode, diff);
+  if (scores.length < 5) return true;
+  var worst = scores[scores.length - 1];
+  if (score > worst.score) return true;
+  if (score === 99 && worst.score === 99) return true;
+  return false;
+}
+
+function hsSort(a, b) {
+  if (a.score !== b.score) return b.score - a.score;
+  return (a.time || 9999) - (b.time || 9999);
+}
+
+function addHighScore(initials, score, mode, diff) {
+  var data = getHighScores();
+  if (!data[mode]) data[mode] = {};
+  if (!data[mode][diff]) data[mode][diff] = [];
+  data[mode][diff].push({
+    initials: initials, score: score,
+    time: state.gameElapsed,
+    date: new Date().toISOString().slice(0, 10)
+  });
+  data[mode][diff].sort(hsSort);
+  data[mode][diff] = data[mode][diff].slice(0, 5);
+  saveHighScores(data);
+}
+
+function resetScores() {
+  if (confirm('Reset all high scores?')) {
+    localStorage.removeItem('diamond-drills-hs');
+    renderHighScoresList();
+  }
+}
+
+// ===== SCREEN MANAGEMENT =====
+function showOverlay(id) {
+  var overlays = document.querySelectorAll('.overlay');
+  for (var i = 0; i < overlays.length; i++) overlays[i].classList.add('hidden');
+  document.getElementById('pause-screen').classList.add('hidden');
+  if (id) document.getElementById(id).classList.remove('hidden');
+}
+
+function showHome() {
+  clearTimers();
+  paused = false;
+  showOverlay('home-screen');
+  renderHomeScreen();
+  initSoundButtons();
+}
+
+function showDiffScreen() {
+  var info = MODE_INFO[currentMode];
+  document.getElementById('diff-mode-name').textContent = info.name;
+  document.getElementById('diff-mode-desc').textContent = info.desc;
+  renderDiffHighScores();
+  showOverlay('diff-screen');
+}
+
+function selectMode(mode) {
+  currentMode = mode;
+  showDiffScreen();
+}
+
+// ===== HOME SCREEN RENDERING =====
+function renderHomeScreen() {
+  var grid = document.getElementById('mode-grid');
+  var html = '';
+  for (var i = 0; i < MODE_KEYS.length; i++) {
+    var key = MODE_KEYS[i];
+    var info = MODE_INFO[key];
+    html += '<div class="mode-card" data-mode="' + key + '" onclick="selectMode(\'' + key + '\')">' +
+      '<div class="mode-icon">' + info.icon + '</div>' +
+      '<div class="mode-name">' + info.name + '</div>' +
+      '<div class="mode-desc">' + info.desc + '</div>' +
+    '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ===== DIFFICULTY SCREEN HIGH SCORES =====
+function renderDiffHighScores() {
+  var el = document.getElementById('diff-hs');
+  var diffs = ['easy', 'hard', 'extreme'];
+  var hasAny = false;
+  var html = '<div class="start-hs-header"><span>Top Scores</span><button class="start-hs-link" onclick="showHighScores()">View All</button></div>';
+
+  for (var d = 0; d < diffs.length; d++) {
+    var diff = diffs[d];
+    var scores = getScoresForModeDiff(currentMode, diff);
+    if (scores && scores.length > 0) {
+      hasAny = true;
+      html += '<div style="font-size:11px;color:#555;margin-top:6px;text-transform:uppercase;">' + DIFFICULTY[diff].label + '</div>';
+      var show = Math.min(scores.length, 3);
+      for (var i = 0; i < show; i++) {
+        var timeStr = scores[i].time ? ' ' + formatTime(scores[i].time) : '';
+        html += '<div class="start-hs-row"><span class="initials">' + scores[i].initials + '</span><span style="color:#74c0fc;font-size:12px;margin-right:6px;">' + timeStr + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
+      }
+    }
+  }
+
+  if (!hasAny) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = html;
+}
+
+// ===== UI UPDATES =====
+function updateScoreboard() {
+  document.getElementById('sb-score').textContent = state.score;
+  document.getElementById('sb-outs').textContent = state.outs;
+  document.getElementById('sb-streak').textContent = state.streak;
+  var info = MODE_INFO[currentMode];
+  document.getElementById('sb-mode-label').textContent = DIFFICULTY[currentDifficulty].label;
+  document.getElementById('sb-mode-icon').textContent = info.icon;
+
+  if (state.correctAnswers > 0) {
+    document.getElementById('sb-avg').textContent = (state.totalResponseTime / state.correctAnswers).toFixed(1) + 's';
+  } else {
+    document.getElementById('sb-avg').innerHTML = '&mdash;';
+  }
+}
+
+function updateBases() {
+  document.getElementById('first').classList.toggle('occupied', state.bases[0]);
+  document.getElementById('second').classList.toggle('occupied', state.bases[1]);
+  document.getElementById('third').classList.toggle('occupied', state.bases[2]);
+}
+
+function updateOuts() {
+  for (var i = 1; i <= 3; i++) {
+    document.getElementById('o' + i).classList.toggle('active', i <= state.outs);
+  }
+}
+
+function showBanner(text, color, duration) {
+  duration = duration || 1200;
+  var el = document.getElementById('result-banner');
+  el.textContent = text;
+  el.style.color = color;
+  el.style.animation = 'bannerIn 0.35s ease forwards';
+  setTimeout(function() {
+    el.style.animation = 'bannerOut 0.3s ease forwards';
+  }, duration - 300);
+}
+
+// ===== TIMER (setInterval, ported from BRM) =====
+function startTimer(customDuration) {
+  var duration = customDuration || DIFFICULTY[currentDifficulty].timer;
+  state.currentTimerDuration = duration;
+  state.pitchTime = 0;
+  state.timerStartTime = Date.now();
+  state.totalPauseTime = 0;
+
+  var bar = document.getElementById('timer-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.style.background = '#51cf66';
+  bar.offsetWidth;
+
+  bar.style.transition = 'width ' + duration + 's linear, background 0.3s';
+  bar.style.width = '0%';
+
+  // Color changes
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  state.colorTimeouts = [
+    setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ffd43b'; }, duration * 400),
+    setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ff6b6b'; }, duration * 700)
+  ];
+
+  state.timerInterval = setInterval(function() {
+    if (paused) return;
+    state.pitchTime += 0.1;
+    if (state.pitchTime >= duration) {
+      clearInterval(state.timerInterval);
+      if (!state.answered) handleTimeout();
+    }
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  if (sweepAnimFrame) { cancelAnimationFrame(sweepAnimFrame); sweepAnimFrame = null; }
+
+  var duration = state.currentTimerDuration || DIFFICULTY[currentDifficulty].timer;
+  var bar = document.getElementById('timer-bar');
+  var pct = Math.max(0, (1 - state.pitchTime / duration) * 100);
+  bar.style.transition = 'none';
+  bar.style.width = pct + '%';
+}
+
+function clearTimers() {
+  clearInterval(state.timerInterval);
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  if (sweepAnimFrame) { cancelAnimationFrame(sweepAnimFrame); sweepAnimFrame = null; }
+}
+
+// ===== PAUSE / RESUME / QUIT (ported from BRM) =====
+function pauseGame() {
+  if (paused || state.answered) return;
+  paused = true;
+  state.pauseStartTime = Date.now();
+  clearInterval(state.timerInterval);
+  if (state.colorTimeouts) {
+    for (var i = 0; i < state.colorTimeouts.length; i++) clearTimeout(state.colorTimeouts[i]);
+  }
+  if (sweepAnimFrame) { cancelAnimationFrame(sweepAnimFrame); sweepAnimFrame = null; }
+
+  // Freeze the timer bar
+  var duration = state.currentTimerDuration || DIFFICULTY[currentDifficulty].timer;
+  var bar = document.getElementById('timer-bar');
+  var pct = Math.max(0, (1 - state.pitchTime / duration) * 100);
+  bar.style.transition = 'none';
+  bar.style.width = pct + '%';
+  pausedTimeLeft = duration - state.pitchTime;
+
+  // Freeze Pitch Read indicator if active
+  if (currentMode === 'go-nogo') {
+    var indicator = document.getElementById('timing-indicator');
+    if (indicator) {
+      var computed = getComputedStyle(indicator);
+      indicator.style.transition = 'none';
+      indicator.style.left = computed.left;
+    }
+  }
+
+  document.getElementById('pause-screen').classList.remove('hidden');
+}
+
+function resumeGame() {
+  if (!paused) return;
+  paused = false;
+  state.totalPauseTime += (Date.now() - state.pauseStartTime);
+  document.getElementById('pause-screen').classList.add('hidden');
+
+  // Resume timer bar animation
+  var duration = state.currentTimerDuration || DIFFICULTY[currentDifficulty].timer;
+  var bar = document.getElementById('timer-bar');
+  bar.offsetWidth;
+  bar.style.transition = 'width ' + pausedTimeLeft + 's linear, background 0.3s';
+  bar.style.width = '0%';
+
+  // Resume color changes
+  var elapsed = state.pitchTime;
+  var yellowAt = duration * 0.4;
+  var redAt = duration * 0.7;
+  state.colorTimeouts = [];
+  if (elapsed < yellowAt) {
+    state.colorTimeouts.push(setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ffd43b'; }, (yellowAt - elapsed) * 1000));
+  }
+  if (elapsed < redAt) {
+    state.colorTimeouts.push(setTimeout(function() { if (!state.answered && !paused) bar.style.background = '#ff6b6b'; }, (redAt - elapsed) * 1000));
+  }
+
+  // Resume setInterval
+  state.timerInterval = setInterval(function() {
+    if (paused) return;
+    state.pitchTime += 0.1;
+    if (state.pitchTime >= duration) {
+      clearInterval(state.timerInterval);
+      if (!state.answered) handleTimeout();
+    }
+  }, 100);
+
+  // Resume Pitch Read indicator if active
+  if (currentMode === 'go-nogo') {
+    var indicator = document.getElementById('timing-indicator');
+    if (indicator) {
+      var remaining = pausedTimeLeft;
+      indicator.offsetWidth;
+      indicator.style.transition = 'left ' + remaining + 's linear';
+      indicator.style.left = '100%';
+    }
+  }
+}
+
+function quitGame() {
+  clearTimers();
+  paused = false;
+  document.getElementById('pause-screen').classList.add('hidden');
+  showHome();
+}
+
+// ===== CORE GAME LOOP =====
+function startGame(diff) {
+  currentDifficulty = diff;
+  state = freshState();
+  paused = false;
+
+  showOverlay(null); // Hide all overlays, show game UI
+  updateScoreboard();
+  updateBases();
+  updateOuts();
+
+  // Extreme starts with 2 outs
+  if (diff === 'extreme') {
+    state.outs = 2;
+    updateOuts();
+    updateScoreboard();
+  }
+
+  document.getElementById('mode-content').innerHTML = '';
+  document.getElementById('pitch-text').textContent = '';
+  document.getElementById('timer-wrap').classList.remove('hidden');
+  initSoundButtons();
+
+  state.gameStartTime = Date.now();
+  setTimeout(servePitch, 500);
+}
+
+function replayGame() {
+  startGame(currentDifficulty);
+}
+
+function servePitch() {
+  if (paused) return;
+  state.answered = false;
+
+  // Show timer for non-Pitch-Read modes, hide for Pitch Read
+  if (currentMode === 'go-nogo') {
+    document.getElementById('timer-wrap').classList.add('hidden');
+  } else {
+    document.getElementById('timer-wrap').classList.remove('hidden');
+  }
+
+  var info = MODE_INFO[currentMode];
+  document.getElementById('pitch-text').textContent = info.name + ' \u00b7 ' + DIFFICULTY[currentDifficulty].label;
+
+  // Dispatch to mode setup
+  if (currentMode === 'color-conflict') setupColorConflict();
+  else if (currentMode === 'shape-snap') setupShapeSnap();
+  else if (currentMode === 'quick-math') setupQuickMath();
+  else if (currentMode === 'go-nogo') setupPitchRead();
+}
+
+// ===== HIT CLASSIFICATION =====
+function classifyHitByTime(time) {
+  var diff = DIFFICULTY[currentDifficulty];
+  if (time < diff.hr) return 'homer';
+  if (time < diff.triple) return 'triple';
+  if (time < diff.double) return 'double';
+  return 'single';
+}
+
+function classifyHitByPrecision(progress) {
+  // progress: 0-1 position of indicator when player tapped
+  var center = state.sweetSpotCenter;
+  var halfWidth = state.sweetSpotWidth / 2;
+  var distance = Math.abs(progress - center);
+
+  if (distance > halfWidth) return null; // OUT - missed sweet spot
+
+  var precision = 1 - (distance / halfWidth); // 1 = dead center, 0 = edge
+  if (precision >= 0.75) return 'homer';
+  if (precision >= 0.50) return 'triple';
+  if (precision >= 0.20) return 'double';
+  return 'single';
+}
+
+// ===== SHARED ANSWER HANDLER =====
+function handleAnswer(correct, hitType, responseTime) {
+  if (state.answered || paused) return;
+  state.answered = true;
+  state.total++;
+  stopTimer();
+
+  if (correct) {
+    state.correct++;
+    state.atBats++;
+    state.hits++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    if (responseTime !== null && responseTime !== undefined) {
+      state.totalResponseTime += responseTime;
+      state.correctAnswers++;
+    }
+
+    var advanceBases, bannerText, bannerColor, sfxType;
+    if (hitType === 'homer') {
+      state.homers++; advanceBases = 4;
+      bannerText = 'HOME RUN!'; bannerColor = '#ffd700'; sfxType = 'homerun';
+    } else if (hitType === 'triple') {
+      state.triples++; advanceBases = 3;
+      bannerText = 'TRIPLE!'; bannerColor = '#51cf66'; sfxType = 'triple';
+    } else if (hitType === 'double') {
+      state.doubles++; advanceBases = 2;
+      bannerText = 'DOUBLE!'; bannerColor = '#74c0fc'; sfxType = 'double';
+    } else {
+      state.singles++; advanceBases = 1;
+      bannerText = 'SINGLE!'; bannerColor = '#fff'; sfxType = 'single';
+    }
+
+    playSound(sfxType);
+    var runs = advanceRunners(advanceBases);
+    state.score += runs;
+    if (state.score >= 99) state.score = 99;
+    showBanner(bannerText, bannerColor);
+
+    if (hitType === 'homer') {
+      document.getElementById('diamond-area').classList.add('flash-hr');
+      setTimeout(function() { document.getElementById('diamond-area').classList.remove('flash-hr'); }, 600);
+    }
+
+    // Win condition
+    if (state.score >= 99) {
+      updateScoreboard();
+      updateBases();
+      updateOuts();
+      setTimeout(gameOver, 1400);
+      return;
+    }
+  } else {
+    // Wrong answer = OUT
+    state.atBats++;
+    state.streak = 0;
+    state.outs++;
+    playSound('out');
+    showBanner('OUT!', '#ff6b6b', 800);
+    document.getElementById('question-area').classList.add('shake');
+    setTimeout(function() { document.getElementById('question-area').classList.remove('shake'); }, 400);
+
+    if (state.outs >= 3) {
+      updateScoreboard();
+      updateOuts();
+      setTimeout(gameOver, 1400);
+      return;
+    }
+  }
+
+  updateScoreboard();
+  updateBases();
+  updateOuts();
+  setTimeout(servePitch, 1400);
+}
+
+function handleTimeout() {
+  if (state.answered) return;
+  state.answered = true;
+  state.total++;
+  state.atBats++;
+  state.streak = 0;
+  state.outs++;
+
+  playSound('out');
+  showBanner('TOO SLOW!', '#ff6b6b', 800);
+  document.getElementById('question-area').classList.add('shake');
+  setTimeout(function() { document.getElementById('question-area').classList.remove('shake'); }, 400);
+
+  if (state.outs >= 3) {
+    updateScoreboard();
+    updateOuts();
+    setTimeout(gameOver, 1400);
+    return;
+  }
+
+  updateScoreboard();
+  updateOuts();
+  setTimeout(servePitch, 1400);
+}
+
+// ===== ADVANCE RUNNERS (ported from BRM) =====
+function advanceRunners(bases) {
+  var runs = 0;
+  if (bases === 4) {
+    // Home run: everyone scores
+    runs = 1;
+    for (var b = 0; b < 3; b++) { if (state.bases[b]) runs++; }
+    state.bases = [false, false, false];
+    return runs;
+  }
+  // Advance existing runners
+  for (var i = 2; i >= 0; i--) {
+    if (state.bases[i]) {
+      state.bases[i] = false;
+      var newPos = i + bases;
+      if (newPos >= 3) { runs++; }
+      else { state.bases[newPos] = true; }
+    }
+  }
+  // Place batter
+  if (bases >= 3) { runs++; }
+  else { state.bases[bases - 1] = true; }
+  return runs;
+}
+
+// ===== MODE: COLOR CONFLICT (Stroop) =====
+function setupColorConflict() {
+  var diff = DIFFICULTY[currentDifficulty];
+  var numColors = diff.tier === 1 ? 4 : diff.tier === 2 ? 5 : 6;
+  var available = COLORS.slice(0, numColors);
+
+  // Pick word and ink (must differ)
+  var wordColor = pick(available);
+  var inkColor;
+  do { inkColor = pick(available); } while (inkColor.name === wordColor.name);
+
+  var correctName = inkColor.name;
+
+  // Build UI
+  var content = document.getElementById('mode-content');
+  var cols = numColors <= 4 ? 'cols-2' : 'cols-3';
+  var html = '<div class="mode-prompt">What COLOR is this text?</div>';
+  html += '<div class="mode-hint">Tap the ink color \u2014 ignore what the word says!</div>';
+  html += '<div class="stroop-word" style="color:' + inkColor.hex + '">' + wordColor.name + '</div>';
+  html += '<div class="stroop-buttons ' + cols + '">';
+  var shuffled = shuffle(available);
+  for (var i = 0; i < shuffled.length; i++) {
+    var c = shuffled[i];
+    html += '<button class="stroop-btn" data-color="' + c.name + '" style="background:' + c.hex + '" aria-label="' + c.name + '"></button>';
+  }
+  html += '</div>';
+  content.innerHTML = html;
+
+  // Event handlers
+  var btns = content.querySelectorAll('.stroop-btn');
+  for (var b = 0; b < btns.length; b++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        if (state.answered) return;
+        var time = state.pitchTime;
+        var correct = btn.dataset.color === correctName;
+
+        // Highlight correct
+        var all = content.querySelectorAll('.stroop-btn');
+        for (var j = 0; j < all.length; j++) {
+          if (all[j].dataset.color === correctName) all[j].classList.add('correct');
+          else all[j].style.opacity = '0.3';
+        }
+        if (!correct) btn.classList.add('wrong');
+
+        var hitType = correct ? classifyHitByTime(time) : null;
+        handleAnswer(correct, hitType, correct ? time : null);
+      }, { once: true });
+    })(btns[b]);
+  }
+
+  startTimer();
+}
+
+// ===== MODE: SHAPE SNAP =====
+function setupShapeSnap() {
+  var diff = DIFFICULTY[currentDifficulty];
+  var numShapes = diff.tier === 1 ? 3 : 4;
+  var numColors = diff.tier === 1 ? 3 : diff.tier === 2 ? 4 : 5;
+
+  var usedShapes = SHAPES.slice(0, numShapes);
+  var usedColors = COLORS.slice(0, numColors);
+
+  // Pick target
+  var targetShape = pick(usedShapes);
+  var targetColor = pick(usedColors);
+
+  // Fill 9 cells, one is target
+  var cells = [];
+  var targetIdx = randInt(0, 8);
+  for (var i = 0; i < 9; i++) {
+    if (i === targetIdx) {
+      cells.push({ shape: targetShape, color: targetColor, isTarget: true });
+    } else {
+      var s, c, attempts = 0;
+      do {
+        s = pick(usedShapes);
+        c = pick(usedColors);
+        attempts++;
+      } while (s === targetShape && c.name === targetColor.name && attempts < 30);
+      cells.push({ shape: s, color: c, isTarget: false });
+    }
+  }
+
+  // Build UI - prompt directly above grid (fixes Shape Snap prompt placement)
+  var content = document.getElementById('mode-content');
+  var html = '<div class="mode-prompt" style="margin-bottom:16px;">Tap the <span style="color:' + targetColor.hex + '">' + targetColor.name.toLowerCase() + ' ' + SHAPE_LABELS[targetShape].toLowerCase() + '</span></div>';
+  html += '<div class="shape-grid">';
+  for (var i = 0; i < cells.length; i++) {
+    var cell = cells[i];
+    html += '<button class="shape-cell" data-idx="' + i + '" data-target="' + cell.isTarget + '">';
+    html += '<div class="shape ' + cell.shape + '" style="background:' + cell.color.hex + '"></div>';
+    html += '</button>';
+  }
+  html += '</div>';
+  content.innerHTML = html;
+
+  // Events
+  var btns = content.querySelectorAll('.shape-cell');
+  for (var b = 0; b < btns.length; b++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        if (state.answered) return;
+        var time = state.pitchTime;
+        var correct = btn.dataset.target === 'true';
+
+        var all = content.querySelectorAll('.shape-cell');
+        for (var j = 0; j < all.length; j++) {
+          if (all[j].dataset.target === 'true') all[j].classList.add('correct');
+        }
+        if (!correct) btn.classList.add('wrong');
+
+        var hitType = correct ? classifyHitByTime(time) : null;
+        handleAnswer(correct, hitType, correct ? time : null);
+      }, { once: true });
+    })(btns[b]);
+  }
+
+  startTimer();
+}
+
+// ===== MODE: QUICK MATH GRID =====
+function setupQuickMath() {
+  var diff = DIFFICULTY[currentDifficulty];
+  var tier = diff.tier;
+
+  // Generate math problem
+  var a, b, op, answer;
+  if (tier === 1) {
+    op = Math.random() < 0.5 ? '+' : '-';
+    a = randInt(2, 12);
+    b = randInt(2, 9);
+    if (op === '-' && b > a) { var t = a; a = b; b = t; }
+    answer = op === '+' ? a + b : a - b;
+  } else if (tier === 2) {
+    if (Math.random() < 0.7) {
+      op = Math.random() < 0.5 ? '+' : '-';
+      a = randInt(12, 50);
+      b = randInt(5, 30);
+      if (op === '-' && b > a) { var t = a; a = b; b = t; }
+      answer = op === '+' ? a + b : a - b;
+    } else {
+      a = randInt(2, 9);
+      b = randInt(2, 9);
+      op = '\u00d7';
+      answer = a * b;
+    }
+  } else {
+    a = randInt(4, 12);
+    b = randInt(4, 12);
+    op = '\u00d7';
+    answer = a * b;
+  }
+
+  var display = a + ' ' + op + ' ' + b;
+
+  // Generate 9 grid numbers
+  var gridNums = [answer];
+  var range = tier === 3 ? 15 : tier === 2 ? 12 : 6;
+  var attempts = 0;
+  while (gridNums.length < 9 && attempts < 100) {
+    attempts++;
+    var offset = randInt(1, range) * (Math.random() < 0.5 ? 1 : -1);
+    var wrong = answer + offset;
+    if (wrong > 0 && wrong !== answer && gridNums.indexOf(wrong) === -1) {
+      gridNums.push(wrong);
+    }
+  }
+  while (gridNums.length < 9) {
+    var n = randInt(1, 99);
+    if (gridNums.indexOf(n) === -1) gridNums.push(n);
+  }
+  var shuffledNums = shuffle(gridNums);
+
+  // Build UI
+  var content = document.getElementById('mode-content');
+  var html = '<div class="math-expression">' + display + ' = ?</div>';
+  html += '<div class="math-grid">';
+  for (var i = 0; i < shuffledNums.length; i++) {
+    var num = shuffledNums[i];
+    html += '<button class="math-cell" data-val="' + num + '" data-correct="' + (num === answer) + '">' + num + '</button>';
+  }
+  html += '</div>';
+  content.innerHTML = html;
+
+  // Events
+  var btns = content.querySelectorAll('.math-cell');
+  for (var b = 0; b < btns.length; b++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        if (state.answered) return;
+        var time = state.pitchTime;
+        var correct = btn.dataset.correct === 'true';
+
+        var all = content.querySelectorAll('.math-cell');
+        for (var j = 0; j < all.length; j++) {
+          if (all[j].dataset.correct === 'true') all[j].classList.add('correct');
+        }
+        if (!correct) btn.classList.add('wrong');
+
+        var hitType = correct ? classifyHitByTime(time) : null;
+        handleAnswer(correct, hitType, correct ? time : null);
+      }, { once: true });
+    })(btns[b]);
+  }
+
+  startTimer();
+}
+
+// ===== MODE: PITCH READ (Timing Window) =====
+function setupPitchRead() {
+  var pr = PITCH_READ[currentDifficulty];
+
+  // Random sweet spot position (not at edges)
+  state.sweetSpotCenter = 0.2 + Math.random() * 0.6; // between 0.2 and 0.8
+  state.sweetSpotWidth = pr.spotWidth;
+  state.sweepDuration = pr.sweep * 1000; // ms
+  state.sweepStart = Date.now();
+
+  var spotLeft = (state.sweetSpotCenter - pr.spotWidth / 2) * 100;
+  var spotWidth = pr.spotWidth * 100;
+
+  // Inner zone visual (where HR/triple live)
+  var innerWidth = pr.spotWidth * 0.5;
+  var innerLeft = (state.sweetSpotCenter - innerWidth / 2) * 100;
+  var innerWidthPct = innerWidth * 100;
+
+  // Build UI
+  var content = document.getElementById('mode-content');
+  var html = '<div class="timing-area">';
+  html += '<div class="mode-prompt">TIME YOUR SWING!</div>';
+  html += '<div class="timing-label">Hit the gold zone</div>';
+  html += '<div class="timing-track" id="timing-track">';
+  html += '<div class="timing-sweetspot" style="left:' + spotLeft + '%;width:' + spotWidth + '%"></div>';
+  html += '<div class="timing-sweetspot-inner" style="left:' + innerLeft + '%;width:' + innerWidthPct + '%"></div>';
+  html += '<div class="timing-indicator" id="timing-indicator"></div>';
+  html += '</div>';
+  html += '<button class="swing-btn" id="swing-btn" onclick="handleSwing()">\u26be SWING!</button>';
+  html += '</div>';
+  content.innerHTML = html;
+
+  // Animate indicator with CSS transition
+  var indicator = document.getElementById('timing-indicator');
+  indicator.style.transition = 'none';
+  indicator.style.left = '0%';
+  indicator.offsetWidth;
+  indicator.style.transition = 'left ' + pr.sweep + 's linear';
+  indicator.style.left = '100%';
+
+  // Start timer for timeout detection (sweep duration is the timer)
+  startTimer(pr.sweep);
+}
+
+function handleSwing() {
+  if (state.answered || paused) return;
+
+  // High-resolution timing from timestamp
+  var activeTime = (Date.now() - state.timerStartTime - state.totalPauseTime) / 1000;
+  var progress = Math.min(1, activeTime / state.currentTimerDuration);
+
+  // Freeze indicator
+  var indicator = document.getElementById('timing-indicator');
+  if (indicator) {
+    indicator.style.transition = 'none';
+    indicator.style.left = (progress * 100) + '%';
+  }
+
+  // Disable swing button
+  var swingBtn = document.getElementById('swing-btn');
+  if (swingBtn) swingBtn.classList.add('disabled');
+
+  // Classify hit by precision
+  var hitType = classifyHitByPrecision(progress);
+
+  if (hitType) {
+    // Color indicator green
+    if (indicator) indicator.classList.add('hit');
+    handleAnswer(true, hitType, null);
+  } else {
+    // Missed sweet spot
+    if (indicator) indicator.classList.add('miss');
+    handleAnswer(false, null, null);
+  }
+}
+
+// ===== GAME OVER =====
+function gameOver() {
+  clearTimers();
+  state.gameElapsed = Math.round((Date.now() - state.gameStartTime) / 1000);
+
+  // Rating (same as BRM)
+  var rating, ratingColor;
+  if (state.score >= 99) { rating = 'LEGEND'; ratingColor = '#ffd700'; }
+  else if (state.score >= 10) { rating = 'Hall of Famer'; ratingColor = '#ffd700'; }
+  else if (state.score >= 6) { rating = 'MVP'; ratingColor = '#51cf66'; }
+  else if (state.score >= 3) { rating = 'All-Star'; ratingColor = '#74c0fc'; }
+  else { rating = 'Rookie'; ratingColor = '#aaa'; }
+
+  var pct = state.atBats > 0 ? Math.round((state.hits / state.atBats) * 100) : 0;
+  var avgTime = state.correctAnswers > 0 ? (state.totalResponseTime / state.correctAnswers).toFixed(1) + 's' : '\u2014';
+  var elapsed = formatTime(state.gameElapsed);
+  var info = MODE_INFO[currentMode];
+
+  document.getElementById('go-title').textContent = state.score >= 99 ? 'YOU WIN!' : 'Game Over';
+  document.getElementById('go-mode-label').textContent = info.name + ' \u00b7 ' + DIFFICULTY[currentDifficulty].label;
+  document.getElementById('go-rating').innerHTML = '<span style="color:' + ratingColor + '">' + rating + '</span>';
+
+  document.getElementById('go-stats').innerHTML =
+    '<div class="stat-box"><div class="stat-val">' + state.score + '</div><div class="stat-label">Runs Scored</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + elapsed + '</div><div class="stat-label">Total Time</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + state.hits + '</div><div class="stat-label">Hits</div></div>' +
+    '<div class="stat-box"><div class="stat-val">' + pct + '%</div><div class="stat-label">Hit Rate</div></div>' +
+    (currentMode !== 'go-nogo' ?
+      '<div class="stat-box"><div class="stat-val">' + avgTime + '</div><div class="stat-label">Avg Response</div></div>' :
+      '<div class="stat-box"><div class="stat-val">' + state.bestStreak + '</div><div class="stat-label">Best Streak</div></div>') +
+    '<div class="stat-box"><div class="stat-val">' + DIFFICULTY[currentDifficulty].label + '</div><div class="stat-label">Difficulty</div></div>';
+
+  document.getElementById('go-hits').innerHTML =
+    state.singles + ' Singles &middot; ' + state.doubles + ' Doubles &middot; ' +
+    state.triples + ' Triples &middot; ' + state.homers + ' Home Runs';
+
+  // High score entry
+  var entryArea = document.getElementById('hs-entry-area');
+  savedHSIndex = -1;
+  if (state.score > 0 && isHighScore(state.score, currentMode, currentDifficulty)) {
+    addHighScore('AAA', state.score, currentMode, currentDifficulty);
+    var scores = getScoresForModeDiff(currentMode, currentDifficulty);
+    for (var si = 0; si < scores.length; si++) {
+      if (scores[si].score === state.score && scores[si].time === state.gameElapsed && scores[si].initials === 'AAA') {
+        savedHSIndex = si; break;
+      }
+    }
+    entryArea.innerHTML = buildHSEntry();
+    initHSEntry();
+  } else {
+    entryArea.innerHTML = '';
+  }
+
+  showOverlay('gameover-screen');
+}
+
+// ===== ARCADE-STYLE INITIAL ENTRY (ported from BRM) =====
+var hsLetters = [0, 0, 0];
+var ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var savedHSIndex = -1;
+
+function buildHSEntry() {
+  return '<div class="hs-entry">' +
+    '<h2>New High Score!</h2>' +
+    '<div class="hs-slots">' +
+      '<div class="hs-slot active" onclick="cycleSlot(0)"><div class="arrows">\u25b2</div><div class="letter" id="slot0">A</div><div class="arrows">\u25bc</div></div>' +
+      '<div class="hs-slot" onclick="cycleSlot(1)"><div class="arrows">\u25b2</div><div class="letter" id="slot1">A</div><div class="arrows">\u25bc</div></div>' +
+      '<div class="hs-slot" onclick="cycleSlot(2)"><div class="arrows">\u25b2</div><div class="letter" id="slot2">A</div><div class="arrows">\u25bc</div></div>' +
+    '</div>' +
+    '<button class="hs-submit" onclick="submitHighScore()">Update Initials</button>' +
+  '</div>';
+}
+
+function initHSEntry() {
+  hsLetters = [0, 0, 0];
+}
+
+function cycleSlot(idx) {
+  hsLetters[idx] = (hsLetters[idx] + 1) % 26;
+  document.getElementById('slot' + idx).textContent = ALPHA[hsLetters[idx]];
+  var slots = document.querySelectorAll('.hs-slot');
+  for (var i = 0; i < slots.length; i++) {
+    slots[i].classList.toggle('active', i === idx);
+  }
+}
+
+function submitHighScore() {
+  var initials = ALPHA[hsLetters[0]] + ALPHA[hsLetters[1]] + ALPHA[hsLetters[2]];
+  var data = getHighScores();
+  if (savedHSIndex >= 0 && data[currentMode] && data[currentMode][currentDifficulty] && data[currentMode][currentDifficulty][savedHSIndex]) {
+    data[currentMode][currentDifficulty][savedHSIndex].initials = initials;
+    saveHighScores(data);
+  }
+  document.getElementById('hs-entry-area').innerHTML =
+    '<div style="color:#51cf66;font-weight:700;margin-bottom:16px;">Saved! ' + initials + ' \u2014 ' + state.score + ' runs (' + formatTime(state.gameElapsed) + ')</div>';
+}
+
+// ===== HIGH SCORES SCREEN =====
+var hsTabMode = 'color-conflict';
+var hsTabDiff = 'easy';
+
+function showHighScores() {
+  showOverlay('highscores-screen');
+  renderHSModeTabs();
+  renderHSDiffTabs();
+  renderHighScoresList();
+}
+
+function renderHSModeTabs() {
+  var html = '';
+  for (var i = 0; i < MODE_KEYS.length; i++) {
+    var key = MODE_KEYS[i];
+    var info = MODE_INFO[key];
+    var active = key === hsTabMode ? ' active' : '';
+    html += '<button class="hs-tab' + active + '" onclick="switchHSMode(\'' + key + '\')" style="' + (key === hsTabMode ? 'border-color:' + info.accent + ';color:' + info.accent : '') + '">' + info.name + '</button>';
+  }
+  document.getElementById('hs-mode-tabs').innerHTML = html;
+}
+
+function renderHSDiffTabs() {
+  var diffs = ['easy', 'hard', 'extreme'];
+  var html = '';
+  for (var i = 0; i < diffs.length; i++) {
+    var d = diffs[i];
+    var active = d === hsTabDiff ? ' active' : '';
+    html += '<button class="hs-tab' + active + '" onclick="switchHSDiff(\'' + d + '\')">' + DIFFICULTY[d].label + '</button>';
+  }
+  document.getElementById('hs-diff-tabs').innerHTML = html;
+}
+
+function switchHSMode(mode) {
+  hsTabMode = mode;
+  renderHSModeTabs();
+  renderHighScoresList();
+}
+
+function switchHSDiff(diff) {
+  hsTabDiff = diff;
+  renderHSDiffTabs();
+  renderHighScoresList();
+}
+
+function renderHighScoresList() {
+  var scores = getScoresForModeDiff(hsTabMode, hsTabDiff);
+  var listEl = document.getElementById('hs-list');
+
+  if (!scores || scores.length === 0) {
+    listEl.innerHTML = '<div class="hs-empty">No scores yet. Play to set one!</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < scores.length; i++) {
+    var timeStr = scores[i].time ? formatTime(scores[i].time) : '';
+    html += '<div class="hs-row"><span class="rank">' + (i + 1) + '.</span><span class="initials">' + scores[i].initials + '</span><span style="color:#74c0fc;font-size:13px;margin-right:8px;">' + timeStr + '</span><span class="hs-score">' + scores[i].score + '</span></div>';
+  }
+  listEl.innerHTML = html;
+}
+
+// ===== INIT =====
+initSoundButtons();
+renderHomeScreen();
+showOverlay('home-screen');
+</script>
+</body>
+</html>
