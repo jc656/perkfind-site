@@ -5,252 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PerkFind — Small apps that do one thing well.</title>
     <meta name="description" content="PerkFind LLC makes small, focused apps. No accounts, no tracking, no nonsense.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #2a2a2a;
-            background: #FFF8F4;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .container {
-            max-width: 680px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* Header */
-        header {
-            padding: 80px 0 0;
-            text-align: center;
-        }
-
-        .logo {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            color: #1a1a1a;
-        }
-
-        .tagline {
-            margin-top: 8px;
-            font-size: 1.05rem;
-            color: #8a8078;
-            font-weight: 400;
-        }
-
-        /* Hero */
-        .hero {
-            text-align: center;
-            padding: 48px 0 40px;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            color: #4a4440;
-            max-width: 500px;
-            margin: 0 auto;
-            line-height: 1.75;
-        }
-
-        /* Philosophy / Values */
-        .values {
-            padding: 24px 0 56px;
-        }
-
-        .values-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-        }
-
-        .value-card {
-            background: #FFFFFF;
-            border: 1px solid #F0E8E2;
-            border-radius: 16px;
-            padding: 28px 22px;
-            text-align: center;
-        }
-
-        .value-icon {
-            font-size: 1.6rem;
-            margin-bottom: 12px;
-        }
-
-        .value-title {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 6px;
-        }
-
-        .value-desc {
-            font-size: 0.88rem;
-            color: #7a7068;
-            line-height: 1.5;
-        }
-
-        /* Sign-off */
-        .sign-off {
-            text-align: center;
-            padding: 40px 0 64px;
-        }
-
-        .sign-off-line {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 1.15rem;
-            font-weight: 500;
-            color: #3a3430;
-            max-width: 480px;
-            margin: 0 auto;
-            line-height: 1.65;
-        }
-
-        .sign-off-divider {
-            width: 48px;
-            height: 3px;
-            background: #E8D5C8;
-            border-radius: 2px;
-            margin: 0 auto 28px;
-        }
-
-        /* Footer */
-        footer {
-            border-top: 1px solid #EDE5DF;
-            padding: 32px 0;
-            text-align: center;
-        }
-
-        .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .footer-copyright {
-            font-size: 0.85rem;
-            color: #9a9088;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .footer-links a {
-            font-size: 0.85rem;
-            color: #8a8078;
-            text-decoration: none;
-            transition: color 0.15s ease;
-        }
-
-        .footer-links a:hover {
-            color: #4a4440;
-        }
-
-        .footer-sep {
-            color: #D8CFC8;
-            font-size: 0.85rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            header {
-                padding: 56px 0 0;
-            }
-
-            .logo {
-                font-size: 2rem;
-            }
-
-            .hero {
-                padding: 36px 0 32px;
-            }
-
-            .hero p {
-                font-size: 1.05rem;
-            }
-
-            .values-grid {
-                grid-template-columns: 1fr;
-                gap: 14px;
-            }
-
-            .value-card {
-                padding: 22px 20px;
-            }
-
-            .sign-off-line {
-                font-size: 1.05rem;
-            }
-        }
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .brutal-shadow { box-shadow: 8px 8px 0px 0px rgba(0,0,0,1); }
+        .marquee { white-space: nowrap; overflow: hidden; box-sizing: border-box; }
+        .marquee span { display: inline-block; padding-left: 100%; animation: marquee 15s linear infinite; }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <div class="logo">PerkFind</div>
-            <div class="tagline">Simple apps. Real useful.</div>
-        </header>
+<body class="bg-[#F4F4F0] text-black min-h-screen flex flex-col justify-between selection:bg-[#FF5B22] selection:text-white">
 
-        <section class="hero">
-            <p>Small apps that do one thing well. No account sign-ups, no AI that thinks it knows better than you.</p>
-        </section>
+    <main class="flex-grow flex flex-col items-center justify-center px-6 py-20">
+        <div class="text-center max-w-3xl mb-16">
+            <h1 class="text-6xl md:text-8xl font-bold tracking-tighter mb-4">PerkFind</h1>
+            <p class="text-xl md:text-2xl font-bold border-2 border-black inline-block px-4 py-1 bg-[#005BFF] text-white brutal-shadow transform -rotate-1">Simple apps. Real useful.</p>
+            <p class="mt-8 text-xl md:text-2xl leading-relaxed border-t-4 border-black pt-8 font-medium">
+                Small apps that do one thing well. No account sign-ups, <br class="hidden md:block">
+                <span class="bg-[#FF5B22] text-white px-2">no AI that thinks it knows better than you.</span>
+            </p>
+        </div>
 
-        <section class="values">
-            <div class="values-grid">
-                <div class="value-card">
-                    <div class="value-icon">🔒</div>
-                    <div class="value-title">Privacy first</div>
-                    <div class="value-desc">No accounts. No tracking. Your data stays on your device.</div>
-                </div>
-                <div class="value-card">
-                    <div class="value-icon">🎯</div>
-                    <div class="value-title">One job, done right</div>
-                    <div class="value-desc">Each app solves one problem without the bloat.</div>
-                </div>
-                <div class="value-card">
-                    <div class="value-icon">💰</div>
-                    <div class="value-title">Pay once, own it</div>
-                    <div class="value-desc">No subscriptions. No ads. Just a fair price.</div>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+            <div class="bg-white border-4 border-black p-8 brutal-shadow flex flex-col items-center text-center transition-transform hover:-translate-y-1">
+                <div class="text-5xl mb-6 border-b-4 border-black pb-4 w-full">🔒</div>
+                <h3 class="text-2xl font-bold mb-4 uppercase tracking-tight">Privacy first</h3>
+                <p class="text-lg">No accounts. No tracking. Your data stays on your device.</p>
             </div>
-        </section>
 
-        <section class="sign-off">
-            <div class="sign-off-divider"></div>
-            <p class="sign-off-line">Made in the USA by a small team that believes apps should do less, not more.</p>
-        </section>
-    </div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-links">
-                    <a href="mailto:hello@perkfind.com">hello@perkfind.com</a>
-                    <span class="footer-sep">&middot;</span>
-                    <a href="/privacy">Privacy Policy</a>
-                    <span class="footer-sep">&middot;</span>
-                    <a href="/terms">Terms of Use</a>
-                </div>
-                <div class="footer-copyright">&copy; 2026 PerkFind LLC</div>
+            <div class="bg-white border-4 border-black p-8 brutal-shadow flex flex-col items-center text-center transition-transform hover:-translate-y-1">
+                <div class="text-5xl mb-6 border-b-4 border-black pb-4 w-full">🎯</div>
+                <h3 class="text-2xl font-bold mb-4 uppercase tracking-tight">One job, right</h3>
+                <p class="text-lg">Each app solves one problem without the bloat.</p>
             </div>
+
+            <div class="bg-white border-4 border-black p-8 brutal-shadow flex flex-col items-center text-center transition-transform hover:-translate-y-1">
+                <div class="text-5xl mb-6 border-b-4 border-black pb-4 w-full">💰</div>
+                <h3 class="text-2xl font-bold mb-4 uppercase tracking-tight">Pay once, own it</h3>
+                <p class="text-lg">No subscriptions. No ads. Just a fair price.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t-4 border-black bg-white py-4 overflow-hidden">
+        <div class="marquee text-lg font-bold uppercase tracking-widest">
+            <span>MADE IN THE USA BY A SMALL TEAM THAT BELIEVES APPS SHOULD DO LESS, NOT MORE. *** HELLO@PERKFIND.COM *** PRIVACY POLICY *** TERMS OF USE *** &copy; 2026 PERKFIND LLC *** </span>
         </div>
     </footer>
 </body>
